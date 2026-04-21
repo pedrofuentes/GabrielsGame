@@ -1,15 +1,15 @@
 # 🎮 Game Design Document
 
-> **Project:** [Game Name]
-> **Created:** [Date]
-> **Author:** [Kid's Name / Team Name]
-> **Status:** Draft | In Progress | Ready to Build
+> **Project:** ¡Gol de Gabriel!
+> **Created:** 2026-04-21
+> **Author:** Gabriel (age 3), Game Designer
+> **Status:** In Progress (v1 playable)
 
 ---
 
 ## Part 1: Game Card 🃏
 
-*This is the kid-friendly overview — one page, big ideas only!*
+*See `docs/game-card.md` for the full Game Card.*
 
 ---
 
@@ -17,28 +17,27 @@
 
 | | |
 |---|---|
-| **🏷️ Game Name** | [What's your game called? Pick something fun and catchy!] |
-| **🦸 Hero** | [Who do you play as? Describe your character — what do they look like, what makes them cool?] |
-| **🌍 World** | [Where does the game take place? A jungle? Outer space? An underwater city?] |
-| **🎯 Goal** | [What are you trying to do? Save someone? Collect all the stars? Reach the finish line?] |
-| **🕹️ Main Action** | [What do you DO most of the time? Jump? Fly? Solve puzzles? Build things?] |
-| **😈 Challenge** | [What makes it hard? Enemies? Time limits? Tricky platforms? Mazes?] |
-| **🎨 Look** | [What does it look like? Cartoon? Pixel art? Bright colors? Dark and spooky?] |
-| **🔊 Sound** | [What does it sound like? Happy music? Space sounds? Nature sounds?] |
-| **⭐ Special Thing** | [What makes YOUR game different from other games? What's the one cool thing?] |
+| **🏷️ Game Name** | ¡Gol de Gabriel! |
+| **🦸 Hero** | A brave little soccer player with spiky anime hair and a blue jersey #10 |
+| **🌍 World** | A bright, colorful soccer field with green grass, blue sky, and white clouds |
+| **🎯 Goal** | Score goals against the goalkeeper and beat the opposing team! |
+| **🕹️ Main Action** | Tap anywhere to kick the ball toward the goal — ¡GOOOL! ⚽ |
+| **😈 Challenge** | A goalkeeper (in black) tries to stop your shots! |
+| **🎨 Look** | Bright cartoon style with anime-inspired characters, bold colors |
+| **🔊 Sound** | Kick sounds, goal chimes, crowd cheering, whistle, champion fanfare |
+| **⭐ Special Thing** | A scoreboard tower ("casa") that grows taller with every goal! |
 
 ### 🖼️ My Game Drawing
 
-*[Sketch or describe what a screenshot of your game would look like]*
-
 ```
-┌─────────────────────────────────────────────┐
-│                                             │
-│   [Draw or describe your game screen here]  │
-│                                             │
-│                                             │
-│                                             │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  ☁️     ⚽ ¡Gol de Gabriel! ⚽      ☁️         │
+│                                                 │
+│  🏠  ⚽0   🏃#10  ──⚽──→      🧤#1   ┃  ┃   │
+│  Tower     Player    Ball      GK     Goal     │
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│              👆 ¡Toca para patear!               │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -46,271 +45,234 @@
 
 ## Part 2: Implementation Spec 🔧
 
-*This is the technical specification for the agent/developer building the game.*
-
 ---
 
 ### 2.1 Game Overview
 
 | Field | Value |
 |-------|-------|
-| **Genre** | [e.g., Platformer, Puzzle, Endless Runner, Top-down Adventure] |
-| **Engine/Framework** | [e.g., Phaser 3, Kaboom.js, p5.js, vanilla Canvas] |
-| **Platform** | [e.g., Web browser (desktop + mobile), desktop only] |
-| **Target Audience** | [e.g., Ages 5-10] |
-| **Session Length** | [e.g., 2-5 minutes per play session] |
-| **Inspiration/References** | [e.g., "Like Flappy Bird but underwater with a dolphin"] |
+| **Genre** | Sports / Arcade (tap-to-kick soccer) |
+| **Engine/Framework** | Phaser 3.80.1 (via CDN) |
+| **Platform** | Web browser (tablet-optimized, touch-first) |
+| **Target Audience** | Age 3 (with parent assistance) |
+| **Session Length** | 1-3 minutes per match (5 goals) |
+| **Inspiration/References** | Captain Tsubasa (anime soccer feel, original character) |
 
 ### 2.2 Core Mechanics
 
-> Detail every mechanic the player interacts with.
+#### Primary Mechanic: Tap-to-Kick
 
-#### Primary Mechanic: [e.g., Jumping]
+- **Input:** Tap anywhere on screen
+- **Behavior:** Player character does kick animation, ball launches toward goal with parabolic arc, 85% chance of scoring
+- **Feedback:** Kick sound (white noise burst), ball spin animation, ball arc trajectory
+- **Edge cases:** Taps ignored during animations (state machine prevents)
 
-- **Input:** [e.g., Spacebar / tap screen]
-- **Behavior:** [e.g., Character jumps 3x their height, gravity pulls them down at X rate]
-- **Feedback:** [e.g., Squash-and-stretch animation, jump sound effect]
-- **Edge cases:** [e.g., No double jump, cannot jump while falling]
+#### Secondary Mechanic: Goal Celebration
 
-#### Secondary Mechanic: [e.g., Collecting]
-
-- **Input:** [e.g., Overlap/collision with item]
-- **Behavior:** [e.g., Item disappears, score increases by 10, particle burst]
-- **Feedback:** [e.g., Sparkle animation, coin sound, score counter updates]
-- **Edge cases:** [e.g., Cannot collect same item twice]
-
-#### Additional Mechanics
-
-- **[Mechanic name]:** [Brief description of input → behavior → feedback]
-- **[Mechanic name]:** [Brief description of input → behavior → feedback]
+- **Input:** Automatic on goal
+- **Behavior:** "¡GOOOL!" text appears, confetti falls, player jumps, camera shakes, scoreboard tower grows
+- **Feedback:** Goal chime (ascending C-E-G-C), crowd cheer, tower block animation with ping sound
+- **Edge cases:** Champion celebration (every 5 goals) overrides normal celebration
 
 ### 2.3 Game States
 
 ```
-┌──────────┐    Start     ┌───────────┐
-│   MENU   │─────────────▶│ GAMEPLAY  │
-└──────────┘              └─────┬─────┘
-                                │
-                    ┌───────────┼───────────┐
-                    ▼           ▼           ▼
-              ┌──────────┐ ┌────────┐ ┌─────────┐
-              │  PAUSE   │ │  WIN   │ │  LOSE   │
-              └──────────┘ └────────┘ └─────────┘
+┌──────────┐  tap   ┌───────────┐  tap   ┌──────────┐
+│  TITLE   │───────▶│ STARTING  │───────▶│  READY   │
+└──────────┘        └───────────┘        └────┬─────┘
+                                              │ tap
+                                         ┌────▼─────┐
+                                         │ KICKING  │
+                                         └────┬─────┘
+                                    ┌─────────┼─────────┐
+                                    ▼                   ▼
+                              ┌──────────┐        ┌──────────┐
+                              │  SCORED  │        │  SAVED   │
+                              └────┬─────┘        └────┬─────┘
+                                   │                   │
+                              ┌────▼─────┐             │
+                              │CHAMPION? │             │
+                              └────┬─────┘             │
+                                   │                   │
+                              ┌────▼───────────────────▼──┐
+                              │       RESETTING           │
+                              └────────────┬──────────────┘
+                                           │
+                                      ┌────▼─────┐
+                                      │  READY   │ (loop)
+                                      └──────────┘
 ```
 
 | State | Entry Condition | Content | Exit Options |
 |-------|----------------|---------|--------------|
-| **Menu** | Game loads | [e.g., Title, Play button, Settings] | Play → Gameplay |
-| **Gameplay** | Player presses Play | [e.g., Active game world, HUD, controls] | Pause, Win condition, Lose condition |
-| **Pause** | [e.g., Esc key / pause button] | [e.g., Resume, Restart, Quit options] | Resume → Gameplay, Quit → Menu |
-| **Win** | [e.g., Reached end of level / score target] | [e.g., Celebration animation, score, next level] | Next Level → Gameplay, Menu → Menu |
-| **Lose** | [e.g., Health reaches 0 / time runs out] | [e.g., Encouraging message, score, retry] | Retry → Gameplay, Menu → Menu |
+| **Title** | Game loads | Title text, bouncing ball, "tap to play" | Tap → Starting |
+| **Starting** | Tap on title | Title fading out, whistle sound | Auto → Ready |
+| **Ready** | Title gone / reset done | Pulsing ball, tap instruction, idle animations | Tap → Kicking |
+| **Kicking** | Tap during Ready | Kick animation, ball arc, GK reaction | Auto → Scored or Saved |
+| **Scored** | Ball reaches goal (85%) | ¡GOOOL!, confetti, celebration, tower grows | Auto → Champion check → Resetting |
+| **Saved** | GK catches (15%) | ¡Casi!, encouraging message | Auto → Resetting |
+| **Champion** | 5 goals scored | ¡CAMPEÓN!, extra confetti, fanfare | Auto → Reset match → Resetting |
+| **Resetting** | After celebration/save | Positions animate back to start | Auto → Ready |
 
 ### 2.4 Level Design
 
-#### Structure
-
-- **Number of levels:** [e.g., 5 levels for v1]
-- **Level format:** [e.g., Side-scrolling sections, single screen, procedurally generated]
-- **Level length:** [e.g., 30-60 seconds each]
-
-#### Progression
-
-| Level | New Element Introduced | Difficulty | Description |
-|-------|----------------------|------------|-------------|
-| 1 | [e.g., Basic movement + collecting] | Easy | [Tutorial level — teaches core mechanic] |
-| 2 | [e.g., First enemy type] | Easy-Medium | [Introduces danger while reinforcing basics] |
-| 3 | [e.g., Moving platforms] | Medium | [Combines previous elements with new challenge] |
-| 4 | [e.g., Timed sections] | Medium-Hard | [Adds time pressure] |
-| 5 | [e.g., Boss encounter] | Hard | [Tests all learned skills] |
-
-#### Difficulty Curve
-
-```
-Difficulty
-    ▲
-    │          ╱
-    │        ╱
-    │      ╱
-    │    ╱
-    │  ╱
-    │╱
-    └──────────────▶ Level
-    1    2    3    4    5
-```
-
-- **Easing in:** [e.g., Level 1 has wide platforms, slow enemies, generous time]
-- **Ramping up:** [e.g., Platforms get smaller, enemies get faster, new mechanics appear]
-- **Mastery moment:** [e.g., Final level combines everything — feels hard but fair]
+**No levels.** The game is an endless loop of kick attempts. Every 5 goals triggers a champion celebration, then the match resets. This is intentional for age 3 — no progression pressure, just fun.
 
 ### 2.5 Character Specs
 
-#### Player Character: [Name]
+#### Player Character (Hero)
 
 | Property | Value |
 |----------|-------|
-| **Sprite size** | [e.g., 64×64 px] |
-| **Hitbox size** | [e.g., 48×56 px, offset 8px from left, 4px from top] |
-| **Move speed** | [e.g., 200 px/sec] |
-| **Jump height** | [e.g., 192 px (3× sprite height)] |
-| **Gravity** | [e.g., 800 px/sec²] |
-| **Health/Lives** | [e.g., 3 lives, no health bar] |
+| **Sprite size** | 80×150 px (programmatic canvas texture) |
+| **Art style** | Chibi anime — big head, spiky brown hair, big eyes |
+| **Jersey** | Blue (#2196F3) with white #10 |
+| **Origin** | (0.5, 1) — positioned at feet |
+| **Idle animation** | Gentle vertical bounce (3px, 600ms) |
 
-**Animations needed:**
-
-| Animation | Frames | Loop | Trigger |
-|-----------|--------|------|---------|
-| Idle | [e.g., 4] | Yes | No input |
-| Run | [e.g., 6] | Yes | Left/right input |
-| Jump | [e.g., 2] | No | Jump input |
-| Fall | [e.g., 2] | No | Airborne + descending |
-| Hurt | [e.g., 3] | No | Collision with enemy |
-| Celebrate | [e.g., 5] | No | Level complete |
-
-#### Enemy: [Name]
+#### Goalkeeper
 
 | Property | Value |
 |----------|-------|
-| **Sprite size** | [e.g., 48×48 px] |
-| **Behavior** | [e.g., Patrol left-right on platform, reverse at edges] |
-| **Speed** | [e.g., 80 px/sec] |
-| **Defeat method** | [e.g., Jump on top] |
-| **Points** | [e.g., 50 points] |
+| **Sprite size** | 80×155 px |
+| **Art style** | Same chibi style, short dark hair |
+| **Jersey** | Dark gray/black (#333333) with white #1 |
+| **Gloves** | Orange (#FF9800) |
+| **Idle animation** | Side-to-side sway (15px, 1000ms) |
+| **Dive behavior** | Dives wrong direction on goals, intercepts on saves |
+
+#### Opponents (Decorative)
+
+| Property | Value |
+|----------|-------|
+| **Count** | 2 static players on the field |
+| **Jersey** | Black (#1A1A1A) |
+| **Scale** | 0.75 (slightly smaller than hero) |
+| **Behavior** | Subtle idle sway, no interaction |
 
 ### 2.6 Object & Item Specs
 
-#### Collectibles
+#### Ball
 
-| Item | Sprite Size | Points | Behavior | Frequency |
-|------|-------------|--------|----------|-----------|
-| [e.g., Star] | [e.g., 32×32] | [e.g., 10] | [e.g., Static, sparkle animation, disappears on collect] | [e.g., 8-12 per level] |
-| [e.g., Power-up] | [e.g., 32×32] | [e.g., 0] | [e.g., Grants invincibility for 5 sec, floats up and down] | [e.g., 1 per level] |
+| Property | Value |
+|----------|-------|
+| **Texture size** | 44×44 px |
+| **Visual** | White with black pentagon pattern, shine highlight |
+| **Arc height** | 100-160 px (randomized) |
+| **Flight duration** | 850ms |
+| **Spin** | 720° during flight |
 
-#### Obstacles
+#### Scoreboard Tower ("Casa")
 
-| Obstacle | Size | Behavior | Damage |
-|----------|------|----------|--------|
-| [e.g., Spikes] | [e.g., 32×16] | [e.g., Static, placed on ground/ceiling] | [e.g., Instant death / lose 1 life] |
-| [e.g., Moving platform] | [e.g., 96×16] | [e.g., Moves vertically, 2 sec cycle] | [e.g., None — transport only] |
-
-#### Interactive Objects
-
-| Object | Size | Interaction | Result |
-|--------|------|-------------|--------|
-| [e.g., Door] | [e.g., 48×64] | [e.g., Touch with key collected] | [e.g., Opens, triggers level complete] |
-| [e.g., Spring] | [e.g., 32×32] | [e.g., Land on top] | [e.g., Launches player 2× normal jump height] |
+| Property | Value |
+|----------|-------|
+| **Position** | Left side (x=90) |
+| **Foundation** | Brown rectangle with door |
+| **Blocks** | 52×26 px, colored (Red→Orange→Yellow→Green→Blue) |
+| **Roof** | Red triangle, moves up with each block |
+| **Animation** | Back.easeOut bounce when block appears |
+| **Windows** | White squares with cross pattern on each block |
 
 ### 2.7 UI Layout
 
-#### Screen: Main Menu
+#### Screen: Title
 
 ```
-┌─────────────────────────────┐
-│                             │
-│        🎮 GAME TITLE        │
-│                             │
-│       [ ▶ PLAY ]            │
-│       [ ⚙ Settings ]       │
-│                             │
-│     🔊 Sound: ON/OFF        │
-└─────────────────────────────┘
+┌───────────────────────────────────┐
+│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ (dark overlay)
+│                                   │
+│   ⚽ ¡Gol de Gabriel! ⚽          │ (gold, bouncing)
+│                                   │
+│     👆 ¡Toca para jugar!          │ (pulsing)
+│                                   │
+│          ⚽ (bouncing ball)        │
+│                                   │
+└───────────────────────────────────┘
 ```
 
-#### Screen: Gameplay HUD
+#### Screen: Gameplay
 
 ```
-┌─────────────────────────────┐
-│ ❤️❤️❤️    ⭐ 0042    ⏱ 1:23  │
-│                             │
-│                             │
-│      [ Game World ]         │
-│                             │
-│                             │
-│              [ ⏸ ]          │
-└─────────────────────────────┘
-```
-
-- **HUD elements:** [e.g., Lives (top-left), Score (top-center), Timer (top-right), Pause (bottom-right)]
-- **Font:** [e.g., Rounded, bold, white with dark outline for readability]
-- **Transitions:** [e.g., Fade to black between screens, 0.5 sec duration]
-
-#### Navigation Flow
-
-```
-Menu ──▶ Gameplay ──▶ Win ──▶ Next Level / Menu
-              │                │
-              ▼                ▼
-           Pause            Lose ──▶ Retry / Menu
+┌───────────────────────────────────┐
+│ ☁    ☁        ☁      ☁          │ sky
+│                                   │
+│ 🏠⚽0                    ┃  ┃   │ tower, score, goal
+│ Tower   🏃  ⚽    ⚫⚫   🧤┃  ┃  │ player, ball, opps, gk
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│ grass
+│       👆 ¡Toca para patear!       │ instruction
+└───────────────────────────────────┘
 ```
 
 ### 2.8 Audio Integration
 
-| Game Event | Sound Type | Description | File |
-|------------|-----------|-------------|------|
-| [e.g., Player jumps] | SFX | [e.g., Short upward whoosh] | `jump.mp3` |
-| [e.g., Collect star] | SFX | [e.g., Bright sparkle chime] | `collect.mp3` |
-| [e.g., Enemy defeated] | SFX | [e.g., Soft pop/squish] | `enemy_defeat.mp3` |
-| [e.g., Player hurt] | SFX | [e.g., Gentle "ow" or buzz — NOT scary] | `hurt.mp3` |
-| [e.g., Level complete] | SFX | [e.g., Victory fanfare, 3 sec] | `win.mp3` |
-| [e.g., Game over] | SFX | [e.g., Gentle descending notes — encouraging] | `lose.mp3` |
-| [e.g., Menu screen] | Music | [e.g., Upbeat loop, 30 sec] | `menu_music.mp3` |
-| [e.g., Gameplay] | Music | [e.g., Energetic adventure loop, 60 sec] | `level_music.mp3` |
-| [e.g., Button click] | UI | [e.g., Soft click/pop] | `ui_click.mp3` |
+| Game Event | Sound Type | Description | Method |
+|------------|-----------|-------------|--------|
+| Title tap | SFX | Short whistle (descending sine) | `playWhistle()` |
+| Kick | SFX | White noise burst with lowpass filter | `playKick()` |
+| Goal scored | SFX | Ascending chime C5-E5-G5-C6 | `playGoalChime()` |
+| Goal scored +300ms | SFX | Crowd cheer (bandpass noise) | `playCrowdCheer()` |
+| Tower block added | SFX | Quick ascending ping | `playTowerBlock()` |
+| Goal saved | SFX | Gentle descending A4-E4 | `playMiss()` |
+| Champion! | SFX | Rich fanfare + sustained chord | `playChampionFanfare()` |
+
+All audio generated programmatically via Web Audio API — no external files needed.
 
 ### 2.9 Art Asset Requirements
 
-| Asset | Dimensions | Format | States/Frames | Priority |
-|-------|-----------|--------|---------------|----------|
-| [e.g., Player spritesheet] | [e.g., 384×64 (6 frames × 64px)] | PNG | [e.g., idle(4), run(6), jump(2), fall(2), hurt(3), win(5)] | High |
-| [e.g., Enemy spritesheet] | [e.g., 192×48 (4 frames × 48px)] | PNG | [e.g., walk(4), defeat(3)] | High |
-| [e.g., Tileset] | [e.g., 256×256 (8×8 tiles of 32px)] | PNG | [e.g., ground, grass, dirt, platform, spikes] | High |
-| [e.g., Background layers] | [e.g., 1280×720 each] | PNG | [e.g., sky, far mountains, near trees] | Medium |
-| [e.g., Collectible star] | [e.g., 128×32 (4 frames × 32px)] | PNG | [e.g., sparkle(4)] | Medium |
-| [e.g., UI buttons] | [e.g., 200×60] | PNG | [e.g., normal, hover, pressed] | Medium |
-| [e.g., Particle effects] | [e.g., 16×16] | PNG | [e.g., sparkle, dust, pop] | Low |
+All art is generated programmatically using Canvas2D in the BootScene. No external art files.
+
+| Asset | Dimensions | Method | Description |
+|-------|-----------|--------|-------------|
+| `player` | 80×150 | Canvas2D | Blue jersey, spiky hair, anime eyes |
+| `goalkeeper` | 80×155 | Canvas2D | Black jersey, orange gloves, short hair |
+| `opponent` | 80×150 | Canvas2D | Black jersey, no gloves |
+| `ball` | 44×44 | Canvas2D | White with pentagon pattern |
+| `confetti_0..7` | 10×10 | Graphics | 8 solid colored squares |
 
 ### 2.10 Technical Requirements
 
 | Requirement | Target |
 |-------------|--------|
-| **Target FPS** | [e.g., 60 FPS] |
-| **Resolution** | [e.g., 1280×720, scales to fit] |
-| **Aspect ratio** | [e.g., 16:9 with letterboxing fallback] |
-| **Input: Desktop** | [e.g., Keyboard (arrow keys + space) and mouse] |
-| **Input: Mobile** | [e.g., Touch controls (on-screen D-pad + jump button)] |
-| **Browser support** | [e.g., Chrome, Firefox, Safari, Edge — latest versions] |
-| **Max asset load** | [e.g., < 5 MB total for fast loading] |
-| **Audio format** | [e.g., MP3 with OGG fallback] |
-| **Save system** | [e.g., localStorage for high score and level progress] |
+| **Target FPS** | 60 FPS |
+| **Resolution** | 1280×720, Phaser Scale.FIT |
+| **Aspect ratio** | 16:9 with auto-centering |
+| **Input** | Touch (tap anywhere) — tablet primary |
+| **Browser support** | Chrome, Firefox, Safari, Edge (latest) |
+| **Max asset load** | ~500 KB (Phaser CDN only, all art programmatic) |
+| **Audio** | Web Audio API (programmatic, no files) |
+| **Save system** | None (no persistence needed for age 3) |
 
 ### 2.11 Scope Boundaries
 
-#### ✅ Version 1 (MVP) — Build This
+#### ✅ Version 1 (MVP) — Built
 
-- [e.g., 3-5 playable levels]
-- [e.g., 1 player character with basic movement]
-- [e.g., 1 enemy type]
-- [e.g., Collectible items and scoring]
-- [e.g., Menu, gameplay, win, and lose screens]
-- [e.g., Background music and core sound effects]
-- [e.g., Desktop keyboard controls]
+- Tap-to-kick soccer gameplay
+- Programmatic character art (player, GK, opponents)
+- Ball physics with parabolic arc
+- Goal celebrations (text, confetti, camera shake)
+- Scoreboard tower that grows
+- Champion celebration every 5 goals
+- Programmatic sound effects (7 sounds)
+- Touch-optimized for tablet
+- Bilingual UI (Spanish)
 
 #### 🔮 Version 2 (Future) — Defer This
 
-- [e.g., Mobile touch controls]
-- [e.g., Additional enemy types]
-- [e.g., Power-up system]
-- [e.g., Level editor]
-- [e.g., Leaderboard / high score sharing]
-- [e.g., Additional player characters or skins]
-- [e.g., Story cutscenes between levels]
+- External art assets (proper sprites/animations)
+- Background music loop
+- Multiple difficulty levels
+- More characters / team customization
+- Power kicks / special moves
+- Score persistence (localStorage)
+- Multiple field themes
 
 #### 🚫 Out of Scope — Not Planned
 
-- [e.g., Multiplayer]
-- [e.g., In-app purchases]
-- [e.g., Account system / login]
-- [e.g., 3D graphics]
+- Multiplayer
+- In-app purchases
+- Account system
+- 3D graphics
+- Online features
 
 ---
 

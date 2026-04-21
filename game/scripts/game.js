@@ -320,6 +320,9 @@ class GameScene extends Phaser.Scene {
         this.towerBlocks = [];
         this.activeTweens = [];
 
+        // Initialize sound
+        soundGen.init();
+
         // Build the scene (back to front)
         this.createSky();
         this.createField();
@@ -747,7 +750,8 @@ class GameScene extends Phaser.Scene {
                 this.titleText.destroy();
                 this.subtitleText.destroy();
                 this.titleBall.destroy();
-                this.setReady();
+                // Short delay before ready, so whistle plays clearly
+                this.time.delayedCall(200, () => this.setReady());
             }
         });
     }
@@ -782,6 +786,8 @@ class GameScene extends Phaser.Scene {
 
     onTap() {
         if (this.state === 'title') {
+            soundGen.resume();
+            soundGen.playWhistle();
             this.startGame();
         } else if (this.state === 'ready') {
             this.kickBall();
@@ -801,6 +807,9 @@ class GameScene extends Phaser.Scene {
 
         // Stop idle animations
         this.stopIdleAnimations();
+
+        // Play kick sound
+        soundGen.playKick();
 
         // Determine outcome
         const isGoal = Math.random() < 0.85;
@@ -905,13 +914,18 @@ class GameScene extends Phaser.Scene {
         this.state = 'goal_scored';
         this.score++;
 
+        // Sound: goal chime + crowd cheer
+        soundGen.playGoalChime();
+        setTimeout(() => soundGen.playCrowdCheer(), 300);
+
         // Update score text
         this.scoreText.setText(`⚽ ${this.score}`);
 
         // Add tower block
         this.addTowerBlock();
+        soundGen.playTowerBlock();
 
-        // Show ¡GOOOL! with dramatic entrance
+        // Show ¡GOOOL!with dramatic entrance
         this.goolText.setAlpha(1).setScale(0).setAngle(-5);
         this.tweens.add({
             targets: this.goolText,
@@ -971,6 +985,9 @@ class GameScene extends Phaser.Scene {
     goalSaved() {
         this.state = 'goal_saved';
 
+        // Sound: gentle miss
+        soundGen.playMiss();
+
         // Show ¡Casi! text
         this.casiText.setAlpha(0).setY(360);
         this.tweens.add({
@@ -996,6 +1013,9 @@ class GameScene extends Phaser.Scene {
 
     showChampion() {
         this.state = 'champion';
+
+        // Sound: champion fanfare!
+        soundGen.playChampionFanfare();
 
         this.championText.setAlpha(1).setScale(0);
         this.tweens.add({
@@ -1138,6 +1158,235 @@ class GameScene extends Phaser.Scene {
         });
     }
 }
+
+// ================================================
+// SOUND GENERATOR — Programmatic audio via Web Audio API
+// ================================================
+
+class SoundGenerator {
+    constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.volume = 0.7;
+    }
+
+    init() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            this.enabled = false;
+        }
+    }
+
+    resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    _gain(value) {
+        const g = this.ctx.createGain();
+        g.gain.value = value * this.volume;
+        return g;
+    }
+
+    playKick() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const duration = 0.12;
+        const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.08));
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.35 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 3000;
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        source.start(now);
+    }
+
+    playGoalChime() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+
+            const start = now + i * 0.12;
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(0.18 * this.volume, start + 0.04);
+            gain.gain.setValueAtTime(0.18 * this.volume, start + 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.6);
+        });
+    }
+
+    playCrowdCheer() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const duration = 1.8;
+        const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            const t = i / this.ctx.sampleRate;
+            const envelope = Math.min(t * 4, 1) * Math.exp(-t * 1.2);
+            data[i] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1200;
+        filter.Q.value = 0.4;
+
+        const gain = this.ctx.createGain();
+        gain.gain.value = 0.12 * this.volume;
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        source.start(now);
+    }
+
+    playWhistle() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(2200, now);
+        osc.frequency.linearRampToValueAtTime(1800, now + 0.25);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.12 * this.volume, now);
+        gain.gain.setValueAtTime(0.12 * this.volume, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    }
+
+    playMiss() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [440, 330]; // A4 → E4 (gentle descending)
+
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.value = freq;
+            osc.type = 'triangle';
+
+            const start = now + i * 0.18;
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(0.12 * this.volume, start + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.35);
+        });
+    }
+
+    playChampionFanfare() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        // Triumphant ascending fanfare: C5 E5 G5 C6 (with richer timbre)
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+
+        notes.forEach((freq, i) => {
+            // Main tone
+            const osc1 = this.ctx.createOscillator();
+            const osc2 = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc1.frequency.value = freq;
+            osc1.type = 'square';
+            osc2.frequency.value = freq * 2;
+            osc2.type = 'sine';
+
+            const start = now + i * 0.2;
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(0.1 * this.volume, start + 0.04);
+            gain.gain.setValueAtTime(0.1 * this.volume, start + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.9);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc1.start(start);
+            osc2.start(start);
+            osc1.stop(start + 0.9);
+            osc2.stop(start + 0.9);
+        });
+
+        // Final sustained chord
+        const chordStart = now + 0.9;
+        [523.25, 659.25, 783.99, 1046.5].forEach(freq => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(0.06 * this.volume, chordStart);
+            gain.gain.exponentialRampToValueAtTime(0.001, chordStart + 1.5);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(chordStart);
+            osc.stop(chordStart + 1.5);
+        });
+    }
+
+    playTowerBlock() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        // Cheerful ascending ping
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.15);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.15 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+}
+
+const soundGen = new SoundGenerator();
 
 // ================================================
 // PHASER CONFIG
