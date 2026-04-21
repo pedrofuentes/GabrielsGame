@@ -1,0 +1,74 @@
+# Game Project Configuration
+# This file configures the Game Creator agent system for your game project.
+# Edit these values to customize the experience.
+
+# ─────────────────────────────────────────────
+# 🧒 Game Designer Profile
+# ─────────────────────────────────────────────
+designer:
+  name: "Gabriel"                    # Kid's name (used in greetings and Game Card)
+  age: 5                      # Age of the Game Designer (4-7 recommended)
+  language: "both"            # "en" (English), "es" (Spanish), "both" (bilingual)
+  interaction_mode: "hybrid"  # "kid" (direct), "parent" (mediated), "hybrid" (both)
+
+# ─────────────────────────────────────────────
+# 🎮 Engine Preferences
+# ─────────────────────────────────────────────
+engine:
+  primary: "auto"             # "auto" (agent decides), "godot", "phaser", "scratch", "love2d"
+  fallback: "phaser"          # Fallback engine if primary fails or isn't suitable
+  platform: "desktop"         # Target platform: "desktop", "web", "both"
+
+# ─────────────────────────────────────────────
+# 🛡️ Safety & Content Rules
+# ─────────────────────────────────────────────
+safety:
+  max_violence: "none"        # "none" or "cartoon" (cartoon = bonking, bouncing, no blood)
+  scary_content: false        # Allow "spooky-cute" content? (silly witches, friendly ghosts — never truly scary)
+  monetization: false         # Any in-app purchases, ads, or premium content? (always false for kids)
+  data_collection: false      # Any player data collection or analytics? (always false for kids)
+  require_parent_approval:    # Features that need parent OK before implementing
+    - multiplayer
+    - online_features
+    - user_generated_content
+
+# ─────────────────────────────────────────────
+# 🎨 Art & Visual Style
+# ─────────────────────────────────────────────
+art:
+  style: "auto"               # "auto" (agent decides), "pixel", "cartoon", "geometric", "watercolor"
+  generation_tool: "prompts"  # "prompts" (AI generation), "canvas" (code-drawn), "svg", "placeholder"
+  color_palette: "bright"     # "bright", "pastel", "earth", "neon", "custom"
+  custom_palette: []          # Hex colors if palette is "custom", e.g., ["#FF6B6B", "#4ECDC4"]
+  resolution: "720p"          # Target resolution: "480p", "720p", "1080p"
+
+# ─────────────────────────────────────────────
+# 🎵 Audio Preferences
+# ─────────────────────────────────────────────
+audio:
+  music_style: "auto"         # "auto", "chiptune", "orchestral", "acoustic", "electronic"
+  sfx_tool: "jsfxr"           # Tool for generating SFX: "jsfxr", "manual", "ai"
+  volume_default: 0.7         # Default volume (0.0 to 1.0)
+  enable_music: true          # Background music enabled?
+  enable_sfx: true            # Sound effects enabled?
+
+# ─────────────────────────────────────────────
+# 📁 Project Paths
+# ─────────────────────────────────────────────
+paths:
+  game_root: "game/"          # Root folder for game code
+  assets: "game/assets/"      # Art, audio, fonts
+  scripts: "game/scripts/"    # Game scripts/code
+  scenes: "game/scenes/"      # Game scenes/levels
+  art_prompts: "art-prompts/" # AI art generation prompts
+  playtests: "playtests/"     # Playtest logs and feedback
+
+# ─────────────────────────────────────────────
+# 🔧 Advanced Settings
+# ─────────────────────────────────────────────
+advanced:
+  target_fps: 60              # Target frames per second
+  max_level_count: 10         # Maximum number of levels (scope control)
+  max_character_count: 5      # Maximum unique characters (scope control)
+  prototype_first: true       # Prioritize getting a playable prototype early
+  template_version: "1.2.0"   # Semantic version of the KidsGames template used
