@@ -1,0 +1,10 @@
+{
+  "name": "gol-de-gabriel",
+  "version": "1.0.0",
+  "description": "⚽ ¡Gol de Gabriel! — A tap-to-kick soccer game for Gabriel (age 3)",
+  "private": true,
+  "scripts": {
+    "dev": "npx http-server . -p 8080 -c-1 --cors -o",
+    "serve": "npx http-server . -p 8080 -c-1 --cors"
+  }
+}

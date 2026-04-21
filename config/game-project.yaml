@@ -7,7 +7,7 @@
 # ─────────────────────────────────────────────
 designer:
   name: "Gabriel"                    # Kid's name (used in greetings and Game Card)
-  age: 5                      # Age of the Game Designer (4-7 recommended)
+  age: 3                      # Age of the Game Designer (younger than typical 4-7 range)
   language: "both"            # "en" (English), "es" (Spanish), "both" (bilingual)
   interaction_mode: "hybrid"  # "kid" (direct), "parent" (mediated), "hybrid" (both)
 
@@ -15,9 +15,9 @@ designer:
 # 🎮 Engine Preferences
 # ─────────────────────────────────────────────
 engine:
-  primary: "auto"             # "auto" (agent decides), "godot", "phaser", "scratch", "love2d"
+  primary: "phaser"            # Phaser.js — web-based, touch-friendly, fast prototyping
   fallback: "phaser"          # Fallback engine if primary fails or isn't suitable
-  platform: "desktop"         # Target platform: "desktop", "web", "both"
+  platform: "web"             # Target platform: web (tablet-optimized)
 
 # ─────────────────────────────────────────────
 # 🛡️ Safety & Content Rules
