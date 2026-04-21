@@ -31,6 +31,7 @@ Gabriel said (in Spanish):
 | Version | Date | What Changed | Gabriel's Idea |
 |---------|------|-------------|------------|
 | v1 | 2026-04-21 | First playable — tap-to-kick soccer game | "quiere tsubasa jugando futbol para ganarle al otro equipo" |
+| v2 | 2026-04-21 | Aim mechanic — tap WHERE to shoot, GK moves up/down | "the game is too easy it is only tap and the goal just happens" |
 
 ---
 
@@ -38,3 +39,7 @@ Gabriel said (in Spanish):
 
 ### Version 1 — The Foundation
 Gabriel described his dream game: a soccer game where the hero scores goals against a goalkeeper, beats the team in black, and a "house" (scoreboard) grows as you win. Built first playable with: tap-to-kick mechanics, auto-advancing player, easy goalkeeper, growing scoreboard tower, big GOOOL! celebrations.
+
+### Version 2 — Gabriel's Feedback
+Gabriel played and said:
+- "the game is too easy it is only tap and the goal just happens" → Added aim mechanic: tap position determines where the ball goes. Goalkeeper sways up/down in front of the goal. Gabriel must aim away from the GK to score. Visual target indicator shows where the shot is aimed.

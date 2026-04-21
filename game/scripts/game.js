@@ -627,13 +627,18 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setAlpha(0).setScale(0).setDepth(12);
 
         // Tap instruction
-        this.tapText = this.add.text(640, 665, '👆 ¡Toca para patear!', {
+        this.tapText = this.add.text(640, 665, '👆 ¡Apunta y patea!', {
             fontFamily: 'Arial, sans-serif',
             fontSize: '30px',
             color: '#FFFFFF',
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5).setAlpha(0).setDepth(10);
+
+        // Tap target indicator (shows where the ball will go)
+        this.tapIndicator = this.add.graphics();
+        this.tapIndicator.setDepth(7);
+        this.tapIndicator.setAlpha(0);
     }
 
     createConfettiPool() {
@@ -663,10 +668,11 @@ class GameScene extends Phaser.Scene {
 
     startGKIdle() {
         if (this.gkIdleTween) this.gkIdleTween.stop();
+        // GK sways up and down in front of the goal — visible pattern for aiming
         this.gkIdleTween = this.tweens.add({
             targets: this.goalkeeper,
-            x: this.gkStartX + 15,
-            duration: 1000,
+            y: this.gkStartY - 80,
+            duration: 1400,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
@@ -790,13 +796,14 @@ class GameScene extends Phaser.Scene {
             soundGen.playWhistle();
             this.startGame();
         } else if (this.state === 'ready') {
-            this.kickBall();
+            const pointer = this.input.activePointer;
+            this.kickBall(pointer.x, pointer.y);
         }
     }
 
     // ─── KICK MECHANIC ───
 
-    kickBall() {
+    kickBall(tapX, tapY) {
         this.state = 'kicking';
 
         // Stop ready-state animations
@@ -811,16 +818,38 @@ class GameScene extends Phaser.Scene {
         // Play kick sound
         soundGen.playKick();
 
-        // Determine outcome
-        const isGoal = Math.random() < 0.85;
+        // === AIM MECHANIC ===
+        // Map tap position to a target spot in the goal
+        // Goal bounds: x=1090-1180, y=345-485
+        const goalTop = 355;
+        const goalBottom = 475;
+        const goalCenterX = 1135;
 
-        // Goal target position
-        const goalTargetX = isGoal ?
-            Phaser.Math.Between(1100, 1165) :
-            this.gkStartX + Phaser.Math.Between(-5, 10);
-        const goalTargetY = isGoal ?
-            Phaser.Math.Between(365, 460) :
-            Phaser.Math.Between(400, 450);
+        // Map tapY to goal height (tap high = shoot high, tap low = shoot low)
+        const aimT = Phaser.Math.Clamp(tapY / 720, 0, 1);
+        const goalTargetY = goalTop + aimT * (goalBottom - goalTop);
+        const goalTargetX = Phaser.Math.Between(1100, 1165);
+
+        // Show tap indicator at aimed position on the goal
+        this.tapIndicator.clear();
+        this.tapIndicator.lineStyle(3, 0xFFFF00, 0.8);
+        this.tapIndicator.strokeCircle(goalCenterX, goalTargetY, 18);
+        this.tapIndicator.fillStyle(0xFFFF00, 0.3);
+        this.tapIndicator.fillCircle(goalCenterX, goalTargetY, 18);
+        this.tapIndicator.setAlpha(1);
+        this.tweens.add({
+            targets: this.tapIndicator,
+            alpha: 0,
+            duration: 600,
+            delay: 400
+        });
+
+        // Check if the ball goes near the goalkeeper
+        // GK's current Y (bottom of sprite, origin at 0.5,1)
+        const gkCenterY = this.goalkeeper.y - 70; // approximate center of GK body
+        const aimDistance = Math.abs(goalTargetY - gkCenterY);
+        const saveRadius = 38; // GK can save if the shot is within this range
+        const isGoal = aimDistance > saveRadius;
 
         // Player kick animation (lean back then kick forward)
         this.tweens.add({
@@ -882,26 +911,24 @@ class GameScene extends Phaser.Scene {
 
         // Goalkeeper reaction
         if (isGoal) {
-            // GK dives the wrong way (or too late)
-            const diveDir = Math.random() > 0.5 ? 1 : -1;
+            // GK dives toward the ball but too late
             this.time.delayedCall(450, () => {
                 this.tweens.add({
                     targets: this.goalkeeper,
-                    x: this.goalkeeper.x + diveDir * 40,
-                    y: this.gkStartY + 12,
-                    angle: diveDir * 35,
+                    y: goalTargetY + 70,
+                    angle: goalTargetY < gkCenterY ? -25 : 25,
                     duration: 350,
                     ease: 'Power2'
                 });
             });
         } else {
-            // GK moves to intercept
-            this.time.delayedCall(300, () => {
+            // GK dives to intercept — reaches the ball!
+            this.time.delayedCall(200, () => {
                 this.tweens.add({
                     targets: this.goalkeeper,
-                    x: goalTargetX - 15,
-                    y: goalTargetY + 30,
-                    duration: 500,
+                    y: goalTargetY + 70,
+                    x: goalTargetX - 20,
+                    duration: 450,
                     ease: 'Power2'
                 });
             });
