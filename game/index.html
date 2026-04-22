@@ -37,5 +37,14 @@
     <div id="game-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script src="scripts/game.js"></script>
+    <script>
+        // Register service worker for fresh updates
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                // Check for updates every time the app opens
+                reg.update();
+            });
+        }
+    </script>
 </body>
 </html>
