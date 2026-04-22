@@ -653,8 +653,16 @@ class GameScene extends Phaser.Scene {
         this.instructionText.setAlpha(0);
         soundGen.playKick();
 
-        const targetX = this.player.x;
+        // Ball always aims INSIDE the goal, biased by player's lane position
+        const goalLeft = this.goalBounds.x + 15;
+        const goalRight = this.goalBounds.x + this.goalBounds.w - 15;
+        const goalCenter = this.goalBounds.x + this.goalBounds.w / 2;
+
+        // Map player X to a position within the goal
+        const playerT = (this.player.x - this.fieldLeft) / this.fieldWidth;
+        const targetX = goalLeft + playerT * (goalRight - goalLeft);
         const targetY = this.fieldTop;
+
         const gkDist = Math.abs(this.gk.x - targetX);
         const saveRadius = 45 - this.difficulty * 2;
         const isGoal = gkDist > Math.max(saveRadius, 25);

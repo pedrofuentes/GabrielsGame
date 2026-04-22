@@ -1,7 +1,7 @@
 // Service Worker — Network-first strategy
 // Always tries to fetch the latest version, falls back to cache if offline
 
-const CACHE_NAME = 'gol-gabriel-v3';
+const CACHE_NAME = 'gol-gabriel-v3.1';
 const ASSETS = [
     './',
     './index.html',
