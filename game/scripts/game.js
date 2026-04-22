@@ -516,17 +516,19 @@ class GameScene extends Phaser.Scene {
             });
         } else if (this.state === 'dribbling') {
             this.handleDribbleTap(pointer);
+            this.swipeStart = null; // Prevent dribble taps from becoming shots
         } else if (this.state === 'shooting') {
-            // Record swipe start position
-            this.swipeStart = { x: pointer.x, y: pointer.y };
+            // Only record swipe start if we're already in shooting state
+            this.swipeStart = { x: pointer.x, y: pointer.y, state: 'shooting' };
         }
     }
 
     onPointerUp(pointer) {
-        if (this.state === 'shooting' && this.swipeStart) {
+        // Only fire a shot if the swipe started during the shooting state
+        if (this.state === 'shooting' && this.swipeStart && this.swipeStart.state === 'shooting') {
             this.handleSwipeShoot(pointer);
-            this.swipeStart = null;
         }
+        this.swipeStart = null;
     }
 
     // ─── DRIBBLE PHASE ───
@@ -647,10 +649,16 @@ class GameScene extends Phaser.Scene {
 
     startShooting() {
         this.state = 'shooting';
+        this.swipeStart = null; // Clear any stale swipe from dribbling
         if (this.trailTimer) this.trailTimer.remove();
         this.playerY = 180;
         this.player.y = 180;
+        // Snap ball to player's current X position
+        this.tweens.killTweensOf(this.ball);
+        this.ball.x = this.player.x;
         this.ball.y = 202;
+        this.ball.setScale(1);
+        this.ball.setAngle(0);
         this.instructionText.setText('👆 ¡Desliza hacia el arco!');
         this.instructionText.setAlpha(1);
         this.tweens.add({ targets: this.instructionText, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
