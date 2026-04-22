@@ -32,6 +32,7 @@ Gabriel said (in Spanish):
 |---------|------|-------------|------------|
 | v1 | 2026-04-21 | First playable — tap-to-kick soccer game | "quiere tsubasa jugando futbol para ganarle al otro equipo" |
 | v2 | 2026-04-21 | Aim mechanic — tap WHERE to shoot, GK moves up/down | "the game is too easy it is only tap and the goal just happens" |
+| v3 | 2026-04-21 | Top-down view! Dribble past defenders + shoot | "still too easy, gets bored easily, wants different view" |
 
 ---
 
@@ -43,3 +44,9 @@ Gabriel described his dream game: a soccer game where the hero scores goals agai
 ### Version 2 — Gabriel's Feedback
 Gabriel played and said:
 - "the game is too easy it is only tap and the goal just happens" → Added aim mechanic: tap position determines where the ball goes. Goalkeeper sways up/down in front of the goal. Gabriel must aim away from the GK to score. Visual target indicator shows where the shot is aimed.
+
+### Version 3 — Gabriel Wants More!
+Gabriel played v2 and said:
+- "still too easy and he gets bored easily" → Complete game redesign!
+- Wanted: different field view, more challenge, more fun
+- Changes: Top-down bird's-eye view of the field. Two-phase gameplay: DRIBBLE (run up the field, dodge defenders by tapping left/center/right lanes) then SHOOT (aim past the goalkeeper). Defenders patrol across the field — dodging them shows "¡Olé!" with sparkles. Collisions are soft (bounce to another lane, defender spins dizzy — funny, not punishing). Adaptive difficulty: starts easy with 1 defender, gets harder as Gabriel scores more, gets easier if he hits defenders. Silly goalkeeper reactions when scored on (spins, falls, shrinks). Ball sparkle trail during shots. 3 new sounds (dodge swoosh, olé chime, bounce boing).
