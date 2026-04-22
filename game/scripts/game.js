@@ -253,7 +253,9 @@ class GameScene extends Phaser.Scene {
         this.createUI();
         this.createConfettiPool();
 
-        this.input.on('pointerdown', (pointer) => this.onTap(pointer));
+        this.input.on('pointerdown', (pointer) => this.onPointerDown(pointer));
+        this.input.on('pointerup', (pointer) => this.onPointerUp(pointer));
+        this.swipeStart = null;
         soundGen.init();
         this.showTitle();
     }
@@ -499,7 +501,7 @@ class GameScene extends Phaser.Scene {
 
     // ─── GAME FLOW ───
 
-    onTap(pointer) {
+    onPointerDown(pointer) {
         if (this.state === 'title') {
             soundGen.resume();
             soundGen.playWhistle();
@@ -515,7 +517,15 @@ class GameScene extends Phaser.Scene {
         } else if (this.state === 'dribbling') {
             this.handleDribbleTap(pointer);
         } else if (this.state === 'shooting') {
-            this.handleShoot();
+            // Record swipe start position
+            this.swipeStart = { x: pointer.x, y: pointer.y };
+        }
+    }
+
+    onPointerUp(pointer) {
+        if (this.state === 'shooting' && this.swipeStart) {
+            this.handleSwipeShoot(pointer);
+            this.swipeStart = null;
         }
     }
 
@@ -641,34 +651,52 @@ class GameScene extends Phaser.Scene {
         this.playerY = 180;
         this.player.y = 180;
         this.ball.y = 202;
-        this.instructionText.setText('👆 ¡Toca para disparar!');
+        this.instructionText.setText('👆 ¡Desliza hacia el arco!');
         this.instructionText.setAlpha(1);
         this.tweens.add({ targets: this.instructionText, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         this.gkDir = Math.random() > 0.5 ? 1 : -1;
     }
 
-    handleShoot() {
+    handleSwipeShoot(pointer) {
+        const dx = pointer.x - this.swipeStart.x;
+        const dy = pointer.y - this.swipeStart.y;
+        const swipeLen = Math.sqrt(dx * dx + dy * dy);
+
+        // Need a minimum swipe length (ignore accidental taps)
+        if (swipeLen < 20) return;
+
         this.state = 'ball_flying';
         this.tweens.killTweensOf(this.instructionText);
         this.instructionText.setAlpha(0);
         soundGen.playKick();
 
-        // Ball always aims INSIDE the goal, biased by player's lane position
-        const goalLeft = this.goalBounds.x + 15;
-        const goalRight = this.goalBounds.x + this.goalBounds.w - 15;
-        const goalCenter = this.goalBounds.x + this.goalBounds.w / 2;
+        // Swipe direction determines where the ball goes
+        // Project the swipe line from ball position to the goal line (y = fieldTop)
+        const ballX = this.ball.x;
+        const ballY = this.ball.y;
+        const distToGoal = ballY - this.fieldTop;
 
-        // Map player X to a position within the goal
-        const playerT = (this.player.x - this.fieldLeft) / this.fieldWidth;
-        const targetX = goalLeft + playerT * (goalRight - goalLeft);
+        // Scale the swipe's dx proportionally to the distance to goal
+        const scale = distToGoal / Math.max(Math.abs(dy), 30);
+        const targetX = ballX + dx * scale;
         const targetY = this.fieldTop;
 
-        const gkDist = Math.abs(this.gk.x - targetX);
-        const saveRadius = 45 - this.difficulty * 2;
-        const isGoal = gkDist > Math.max(saveRadius, 25);
+        // Determine outcome: is it on target?
+        const goalLeft = this.goalBounds.x;
+        const goalRight = this.goalBounds.x + this.goalBounds.w;
+        const isOnTarget = targetX > goalLeft + 5 && targetX < goalRight - 5;
 
+        let isGoal = false;
+        if (isOnTarget) {
+            const gkDist = Math.abs(this.gk.x - targetX);
+            const saveRadius = 45 - this.difficulty * 2;
+            isGoal = gkDist > Math.max(saveRadius, 25);
+        }
+
+        // Player kick animation
         this.tweens.add({ targets: this.player, scaleX: 1.2, scaleY: 0.85, duration: 100, yoyo: true, ease: 'Power2' });
 
+        // Ball flight
         this.tweens.add({
             targets: this.ball, x: targetX, y: targetY + 15, scaleX: 0.6, scaleY: 0.6,
             duration: 500, ease: 'Power2.easeIn',
@@ -678,11 +706,20 @@ class GameScene extends Phaser.Scene {
                     this.tweens.add({ targets: s, alpha: 0, scale: 0, duration: 300, onComplete: () => s.destroy() });
                 }
             },
-            onComplete: () => isGoal ? this.goalScored() : this.goalSaved()
+            onComplete: () => {
+                if (isGoal) {
+                    this.goalScored();
+                } else if (isOnTarget) {
+                    this.goalSaved();
+                } else {
+                    this.shotMissed();
+                }
+            }
         });
         this.tweens.add({ targets: this.ball, angle: this.ball.angle + 540, duration: 500, ease: 'Linear' });
 
-        if (!isGoal) {
+        // GK dives toward the ball if on target
+        if (isOnTarget && !isGoal) {
             this.tweens.add({ targets: this.gk, x: targetX, duration: 400, ease: 'Power2' });
         }
     }
@@ -730,9 +767,26 @@ class GameScene extends Phaser.Scene {
         this.consecutiveGoals = 0;
         if (this.difficulty > 1) this.difficulty -= 1;
         soundGen.playMiss();
+        this.casiText.setText('¡Atajada!');
         this.casiText.setAlpha(0).setY(360);
         this.tweens.add({ targets: this.casiText, y: 340, alpha: 1, duration: 300, ease: 'Back.easeOut' });
         this.tweens.add({ targets: this.gk, y: this.gk.y - 15, duration: 200, yoyo: true, repeat: 2, ease: 'Sine.easeOut' });
+        this.time.delayedCall(1200, () => {
+            this.tweens.add({ targets: this.casiText, alpha: 0, duration: 200 });
+            this.time.delayedCall(300, () => this.startDribble());
+        });
+    }
+
+    shotMissed() {
+        this.state = 'shot_missed';
+        this.consecutiveGoals = 0;
+        if (this.difficulty > 1) this.difficulty -= 0.5;
+        soundGen.playMiss();
+        this.casiText.setText('¡Casi! ¡Otra vez!');
+        this.casiText.setAlpha(0).setY(360);
+        this.tweens.add({ targets: this.casiText, y: 340, alpha: 1, duration: 300, ease: 'Back.easeOut' });
+        // GK does a little taunt
+        this.tweens.add({ targets: this.gk, angle: { from: -10, to: 10 }, duration: 150, yoyo: true, repeat: 2 });
         this.time.delayedCall(1200, () => {
             this.tweens.add({ targets: this.casiText, alpha: 0, duration: 200 });
             this.time.delayedCall(300, () => this.startDribble());
