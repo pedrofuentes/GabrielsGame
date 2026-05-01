@@ -233,6 +233,15 @@ For ages 6–7, text is allowed — but the rule above shifts to: **every text e
 | **Visual comfort** | No flashing lights, no eyestrain-inducing patterns, appropriate brightness? |
 | **Graceful exit** | Can the player quit/pause easily? Does progress save when appropriate? |
 
+### Accessibility Baseline
+
+| Check | Criteria |
+|-------|----------|
+| **One-hand play possible** | The game can be played with one hand (mouse-only OR keyboard-only OR touch-only). Two-hand controls are an option, never a requirement. |
+| **No color-only signals** | No game-critical information conveyed by color alone. Every colored signal has a redundant shape, icon, or animation cue. |
+| **Pause accessible any time** | The game can be paused at ANY moment during gameplay via on-screen button (≥64px), keyboard (Esc/P), or touch. Never locked out during animations or transitions. |
+| **No flashing >3Hz** | No visual element flashes more than 3 times per second. Screen shake intensity ≤0.5% of screen width. No strobing effects. |
+
 ---
 
 ## 🔒 Safety Audit

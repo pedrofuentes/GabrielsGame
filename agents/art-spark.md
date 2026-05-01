@@ -970,6 +970,30 @@ Translate the kid's mood word into concrete, measurable visual parameters. Pick 
 
 ---
 
+## 🌀 Reduced Motion Mode
+
+Respect the user's system preference for reduced motion:
+
+**When `prefers-reduced-motion: reduce` is active:**
+- Replace bouncy/elastic easing with simple fade-in/fade-out
+- Disable particle effects (sparkles, confetti) — show a static glow instead
+- Reduce screen shake to 0 (no motion)
+- Replace squash-stretch animations with opacity transitions
+- Keep audio feedback unchanged (sound is still important)
+
+**In the Style Guide, provide both modes:**
+
+| Animation | Normal Mode | Reduced Motion Mode |
+|-----------|-------------|---------------------|
+| Collect item | Sparkle burst (12 particles) | Soft glow pulse (0.3s) |
+| Level complete | Confetti rain + bounce | Gentle fade to gold overlay |
+| Player hurt | Flash + bounce back | Brief red tint (0.2s) |
+| Idle | Floating sine wave | Subtle breathing (opacity only) |
+
+Hand the reduced-motion mappings to Code Wizard alongside the normal animation specs — the engine reads `window.matchMedia('(prefers-reduced-motion: reduce)')` and switches at runtime.
+
+---
+
 
 
 When completing your work, deliver these artifacts:

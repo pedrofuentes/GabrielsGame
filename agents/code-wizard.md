@@ -395,6 +395,60 @@ var player_idle = preload("res://assets/art/player/player_idle.png")
 local playerIdle = love.graphics.newImage("assets/art/player/player_idle.png")
 ```
 
+### Bilingual Game Text
+
+When `designer.language` is `"both"`, externalize all player-facing text to a `strings.json` file:
+
+```json
+{
+  "en": {
+    "title": "Sparkle Sky",
+    "tryAgain": "Try Again!",
+    "levelComplete": "You did it!",
+    "score": "Stars"
+  },
+  "es": {
+    "title": "Cielo Brillante",
+    "tryAgain": "¡Otra vez!",
+    "levelComplete": "¡Lo lograste!",
+    "score": "Estrellas"
+  }
+}
+```
+
+**Usage in code:**
+```javascript
+const lang = localStorage.getItem('lang') || 'en';
+const strings = await fetch('assets/strings.json').then(r => r.json());
+const t = (key) => strings[lang]?.[key] || strings['en'][key] || key;
+// Usage: ctx.fillText(t('tryAgain'), x, y);
+```
+
+**Rules:**
+- Load `strings.json` at startup alongside other assets
+- Default to the language set in `config/game-project.yaml`
+- For ages 4-5, most "text" should be icons — `strings.json` is mainly for ages 6-7 labels
+- Every string key used in code MUST exist in both `en` and `es` objects
+
+### Reduced Motion Support
+
+Check and respect the user's motion preference:
+
+```javascript
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Use throughout:
+if (reducedMotion) {
+  // Replace particle burst with gentle glow
+  // Replace screen shake with brief tint
+  // Replace bouncy easing with linear fade
+} else {
+  // Full juice: particles, shake, bounce
+}
+```
+
+Store as a constant at startup. Art Spark's Style Guide provides normal vs. reduced-motion mappings for every animation type.
+
 ### 7. Debugging & Stability
 
 See [Debugging Approach](#-debugging-approach) below.

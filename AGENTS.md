@@ -1,6 +1,6 @@
 # 🎮 Game Creator Agent System
 #
-# Template Version: 1.3.1
+# Template Version: 1.3.2
 # Source: https://github.com/pedrofuentes/KidsGames
 
 > **A team of AI agents that helps kids bring their dream games to life.**
@@ -355,7 +355,7 @@ Do not advance to the next phase until ALL criteria for the current phase are tr
 | Visual Identity | `art-style-guide.md` exists; placeholder or final asset present for every P0 item |
 | Audio Landscape | `sound-design-guide.md` exists; every audio event has a real file or a silent fallback |
 | Fun Validation | Fun Guardian verdict is 🟢 or 🟡 with action items assigned to specific agents |
-| Polish & Ship | All 🔴 items resolved; game version bumped in `game-card.md`; Development History updated |
+| Polish & Ship | All 🔴 items resolved; game version bumped in `game-card.md`; Development History updated; `docs/parent-summary.md` updated |
 
 #### Feedback Dispatch Rules
 
@@ -851,6 +851,7 @@ When a session ends naturally (parent says time's up, kid is done, or a version 
 - Always end on a celebration of what was accomplished
 - Never end on an unresolved question — either answer it or defer it
 - Log the session summary in Development History for next pickup
+- **Parent Recap:** At the end of every session, update `docs/parent-summary.md` with a plain-language summary of what was built, what the kid decided, any safety flags, and what's queued for next time. This is the parent's primary artifact — keep it non-technical and warm.
 
 ---
 
