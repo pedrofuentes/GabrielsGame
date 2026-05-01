@@ -62,6 +62,12 @@ game/
 Implement the gameplay mechanics defined in the Implementation Spec:
 
 - **Movement** — Arrow keys, WASD, or touch/swipe. Keep it dead simple. For ages 4–5, consider auto-movement or one-button controls.
+  - **All velocity-based movement MUST use delta-time.** Speeds are expressed in **pixels-per-second**, never pixels-per-frame. A frame-rate-dependent game is a broken game.
+  - Per-engine delta-time pattern:
+    - **Vanilla Canvas:** `const now = performance.now(); const dt = (now - lastTime) / 1000; lastTime = now; player.x += player.vx * dt;`
+    - **Phaser:** `update(time, delta) { player.x += player.vx * (delta / 1000); }` (Phaser passes `delta` in ms)
+    - **Godot:** `func _process(delta): position.x += velocity.x * delta` (delta in seconds)
+    - **LÖVE:** `function love.update(dt) player.x = player.x + player.vx * dt end`
 - **Core action** — The ONE thing the player does (jump, shoot bubbles, collect, paint, etc.)
 - **Collision detection** — Player vs. world, player vs. enemies, player vs. items
 - **Scoring / progress** — Stars, points, items collected — whatever the Game Card specifies
@@ -90,6 +96,72 @@ Every game needs these states, even the simplest ones:
 - **GAME OVER** — Show the kid's score. Celebrate effort ("Great job!"). Big "Play Again" button.
 - **WIN** — Celebration! Particles, sounds, animation. Make the kid feel awesome.
 
+#### State Machine Reference Implementation (Vanilla JS / Phaser)
+
+Drop this in directly. Every state has `onEnter`, `onExit`, and `update`. Transitions are validated against an explicit allowlist — invalid transitions are silently rejected (kids never see an error).
+
+```javascript
+const STATES = {
+  MENU:     { onEnter() { showMenu(); },        onExit() { hideMenu(); },        update()   { if (input.start)   game.transition('PLAYING'); } },
+  PLAYING:  { onEnter() { spawnPlayer(); },     onExit() { },                    update(dt) { player.update(dt); checkWinLose(); } },
+  PAUSED:   { onEnter() { dimScreen(); },       onExit() { undimScreen(); },     update()   { if (input.start)   game.transition('PLAYING'); } },
+  GAMEOVER: { onEnter() { showGameOver(); },    onExit() { hideGameOver(); },    update()   { if (input.confirm) game.transition('MENU'); } },
+  WIN:      { onEnter() { playCelebration(); }, onExit() { stopCelebration(); }, update()   { if (input.confirm) game.transition('MENU'); } }
+};
+
+const VALID_TRANSITIONS = {
+  MENU:     ['PLAYING'],
+  PLAYING:  ['PAUSED', 'GAMEOVER', 'WIN'],
+  PAUSED:   ['PLAYING', 'MENU'],
+  GAMEOVER: ['MENU', 'PLAYING'],
+  WIN:      ['MENU', 'PLAYING']
+};
+
+const game = {
+  current: 'MENU',
+  transition(next) {
+    if (!VALID_TRANSITIONS[this.current].includes(next)) {
+      console.warn(`Invalid transition ${this.current} -> ${next}`);
+      return;
+    }
+    STATES[this.current].onExit();
+    this.current = next;
+    STATES[next].onEnter();
+  },
+  tick(dt) { STATES[this.current].update(dt); }
+};
+```
+
+#### State Machine Reference Implementation (Godot / GDScript)
+
+Use an enum + an autoload singleton named `GameState`:
+
+```gdscript
+# autoload: GameState.gd
+enum State { MENU, PLAYING, PAUSED, GAMEOVER, WIN }
+var current: State = State.MENU
+
+const VALID_TRANSITIONS = {
+    State.MENU:     [State.PLAYING],
+    State.PLAYING:  [State.PAUSED, State.GAMEOVER, State.WIN],
+    State.PAUSED:   [State.PLAYING, State.MENU],
+    State.GAMEOVER: [State.MENU, State.PLAYING],
+    State.WIN:      [State.MENU, State.PLAYING]
+}
+
+signal state_changed(old, new)
+
+func transition(next: State) -> void:
+    if not VALID_TRANSITIONS[current].has(next):
+        push_warning("Invalid transition %s -> %s" % [current, next])
+        return
+    var old = current
+    current = next
+    emit_signal("state_changed", old, next)
+```
+
+Scenes connect to `state_changed` and run their own enter/exit logic.
+
 ### 5. Input Handling
 
 Design input for small hands and developing motor skills:
@@ -103,6 +175,98 @@ Design input for small hands and developing motor skills:
 
 **Critical:** No time-pressure input requirements for ages 4–5. Generous input windows for ages 6–7.
 
+#### Pause Button — Required Specification
+
+**Every game MUST expose pause through ALL of these methods, even on keyboard-only platforms** (kids switch input methods constantly):
+
+- A **visible 64×64 px pause button** anchored at the **top-right** of the play area, with a clearly recognizable pause glyph (`||`)
+- **Keyboard:** `Escape` AND `P` keys (both work)
+- **Gamepad:** `Start` button
+- **Touch:** Tap on the visible pause button (counts as tap, not drag)
+
+The pause button must be present on screen during the `PLAYING` state on all platforms. Do NOT hide it on desktop "because they have a keyboard."
+
+#### Mobile-Ready HTML Boilerplate (web targets)
+
+Every web game's `index.html` MUST include:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>[Game Name]</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
+    body {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      touch-action: none;                /* disable browser pan/zoom on canvas */
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    #game-canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+    #rotate-overlay {
+      display: none; position: fixed; inset: 0; background: #000; color: #fff;
+      align-items: center; justify-content: center; font-size: 32px; text-align: center; z-index: 999;
+    }
+    @media (orientation: portrait) { #rotate-overlay { display: flex; } }
+  </style>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <div id="rotate-overlay">📱↪️ Please rotate your device!</div>
+</body>
+</html>
+```
+
+- **Default orientation: landscape.** The rotate overlay shows whenever the device is in portrait.
+- `touch-action: none` prevents accidental scroll/zoom from gameplay taps.
+- `safe-area-inset-*` keeps the game inside the notch/home-indicator area on iOS.
+
+#### Resolution from Config
+
+Read the target resolution from `config/game-project.yaml` (key: `display.resolution`). All resolutions are **16:9**:
+
+| Config value | Pixel dimensions |
+|--------------|------------------|
+| `480p`  | 854 × 480 |
+| `720p`  | 1280 × 720 (default) |
+| `1080p` | 1920 × 1080 |
+
+The canvas is rendered at the configured logical resolution and CSS-scaled to the viewport using `object-fit: contain` (letterboxes if needed; never stretches).
+
+#### Sound Integration Contract
+
+- **File naming:** `assets/audio/sfx/{action}.wav` (short SFX, ≤ 1s) and `assets/audio/music/{name}_loop.ogg` (looping music).
+- **Autoplay policy:** modern browsers block audio until a user gesture. Resume the AudioContext on the FIRST pointer/key event:
+  ```javascript
+  const onFirstInput = () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    window.removeEventListener('pointerdown', onFirstInput);
+    window.removeEventListener('keydown', onFirstInput);
+  };
+  window.addEventListener('pointerdown', onFirstInput);
+  window.addEventListener('keydown', onFirstInput);
+  ```
+- **Procedural SFX (Web Audio oscillators) take priority over file-based SFX** when the engine is Vanilla Canvas — they ship with zero asset cost and always work. Use file-based SFX only when Sound Maestro has produced the file AND the procedural version isn't expressive enough.
+
+#### Error Overlay Component — Specification
+
+When the state machine itself fails (truly unrecoverable), show a single, kid-friendly overlay:
+
+- **Full-screen overlay** at **70% black opacity**
+- **Centered card** (rounded corners, friendly color, ~60% screen width)
+- **One of 3 preset friendly messages**, randomly chosen:
+  - "Oops! Let's try that again! 🌟"
+  - "The game took a little nap. Wake it up?"
+  - "Hmm, something silly happened. Want to start over?"
+- **One big OK button** (≥ 96 × 96 px) that returns to `MENU`
+- **No stack traces, no error codes, no technical text — ever.**
+
+**Recovery rule:** for non-critical failures (missing asset, audio glitch, single bad collision), recover **silently** — log to console, swap in a placeholder, continue. **The error overlay is reserved for state-machine failures only.**
+
 ### 6. Asset Integration
 
 Receive and integrate assets from other agents:
@@ -110,6 +274,44 @@ Receive and integrate assets from other agents:
 - **Art assets** (from Art Spark): Sprites, backgrounds, UI elements. Load from `game/assets/art/`. Handle missing assets gracefully with colored rectangles as placeholders.
 - **Audio assets** (from Sound Maestro): SFX and music. Load from `game/assets/audio/`. Game must work silently if audio is missing.
 - **Fonts**: Use large, rounded, kid-friendly fonts. Minimum 24px for in-game text, 32px+ for menus.
+
+#### Asset Filename Contract
+
+All assets follow this naming contract. Art Spark and Sound Maestro produce files with these names; Code Wizard loads them with the matching paths.
+
+| Asset type | Filename pattern | Example |
+|------------|-----------------|---------|
+| Static sprite | `{entity}_{state}.png` | `player_idle.png`, `enemy_walk.png` |
+| Spritesheet | `{entity}_sheet.png` + `{entity}_sheet.json` (frame data) | `player_sheet.png`, `player_sheet.json` |
+| Background | `bg_{scene}.png` | `bg_forest.png`, `bg_castle.png` |
+| UI element | `ui_{element}.png` | `ui_button_play.png`, `ui_heart.png` |
+| Sound effect | `sfx/{action}.wav` | `sfx/jump.wav`, `sfx/collect.wav` |
+| Music loop | `music/{name}_loop.ogg` | `music/forest_loop.ogg` |
+
+#### Per-Engine Asset Load Patterns
+
+```javascript
+// Phaser (in preload)
+this.load.image('player_idle', 'assets/art/player/player_idle.png');
+this.load.spritesheet('player', 'assets/art/player/player_sheet.png', { frameWidth: 32, frameHeight: 32 });
+this.load.audio('jump', 'assets/audio/sfx/jump.wav');
+
+// Vanilla Canvas
+const playerImg = new Image();
+playerImg.src = 'assets/art/player/player_idle.png';
+playerImg.onload = () => { /* safe to draw */ };
+playerImg.onerror = () => { /* draw colored rectangle placeholder */ };
+```
+
+```gdscript
+# Godot
+var player_idle = preload("res://assets/art/player/player_idle.png")
+```
+
+```lua
+-- LÖVE
+local playerIdle = love.graphics.newImage("assets/art/player/player_idle.png")
+```
 
 ### 7. Debugging & Stability
 
@@ -145,7 +347,7 @@ If `primary` is a specific engine, use that engine. If `primary` is `"auto"`, pr
 
 ### Step 2: Evaluate Game Requirements
 
-Score each engine against the game's needs:
+**Use the deterministic decision tree in Step 3 — it is the algorithm.** The star-rating table below is **reference only**; do not use it to make selection decisions.
 
 | Factor | Phaser (JS) | Godot (GDScript) | Scratch | LÖVE (Lua) |
 |--------|:-----------:|:-----------------:|:-------:|:----------:|
@@ -161,7 +363,32 @@ Score each engine against the game's needs:
 
 ### Step 3: Apply Selection Rules
 
-Follow this decision tree:
+#### Definition: "Entity Type"
+
+An **entity type** is a distinct class with its own update/render logic — for example: Player, EnemyA, EnemyB, Coin, MovingPlatform. **Particles, UI elements, static walls, and background tiles do NOT count** as entity types.
+
+#### Deterministic Decision Tree (use this — it is the algorithm)
+
+```
+Step A — Single-file Vanilla Canvas threshold (ALL must be true):
+  - ≤ 4 entity types
+  - ≤ 1 scrolling layer
+  - No tile-based level loading from external files
+  - No spritesheet animation (procedural shapes or single-frame sprites only)
+  - Audio is procedural (Web Audio oscillators) OR ≤ 5 short SFX files
+
+  If ALL pass  → Vanilla HTML5 Canvas (single file)
+  If ANY fails → Phaser
+
+Step B — Platform / capability overrides (apply AFTER Step A):
+  - If platform is "desktop" AND game needs 3D OR physics joints → Godot
+  - If art.style is "pixel" AND platform is "desktop"            → LÖVE
+
+Step C — Fallback chain (used when the chosen engine fails to bootstrap):
+  auto-selected engine → config.engine.fallback → Vanilla HTML5 Canvas
+```
+
+#### Reference Decision Tree (legacy — kept for context, do not branch on this)
 
 ```
 Is the Game Designer age 4–5 AND parent wants kid to see the "code"?
@@ -196,10 +423,34 @@ Default → Phaser (JavaScript)
 After selecting an engine:
 
 1. Verify the engine can handle ALL mechanics in the Implementation Spec
-2. If any mechanic is impossible or extremely difficult, switch to the fallback engine
-3. Document the choice and rationale in a code comment at the top of the main entry file
+2. **Switch to the fallback engine ONLY if** the chosen engine has no API for a required mechanic, OR requires a third-party plugin to implement it. **Do NOT switch for performance concerns** — optimize within the chosen engine instead.
+3. **Log the reason** for any fallback in the header comment of the main entry file (e.g., `// Fell back from Godot to Phaser: spec requires browser-only Web Audio analyzer`).
+4. **If even the fallback engine fails**, do not silently downgrade further — report back to Game Creator with a Spec Gap Report requesting **scope reduction** (which mechanic to drop).
 
 ### Engine-Specific Notes
+
+#### Pinned Engine Versions
+
+Use these exact versions for reproducibility. Do NOT silently upgrade.
+
+| Engine | Pinned version | How to load |
+|--------|----------------|-------------|
+| Vanilla HTML5 Canvas | Browser-native (no dependency) | n/a |
+| Phaser | **3.80.1** | `<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>` |
+| Godot | **4.3 stable** | Download from godotengine.org |
+| LÖVE | **11.5** | Download from love2d.org |
+
+#### Per-Engine Scaffold Layout
+
+Use exactly the layout below for the chosen engine. **Do not invent additional folders.**
+
+| Engine | Entry file | Scaffold layout |
+|--------|------------|-----------------|
+| Vanilla Canvas | `game/index.html` | **Single file** with inline `<style>` and `<script>`. **NO `scripts/` folder.** Assets in `game/assets/` only if needed. |
+| Phaser | `game/index.html` + `game/scripts/main.js` | `scripts/{main,player,enemies,items,ui,gameState,config}.js` (camelCase filenames) |
+| Godot | `game/project.godot` | `scenes/{Main,Player,Enemy,Item,UI}.tscn` + `scripts/{Player,Enemy,Item,UI,GameState}.gd` (PascalCase) |
+| LÖVE | `game/main.lua` | `main.lua` + `{player,enemies,items,ui,gamestate,config}.lua` (lowercase) |
+| Scratch | `game/scratch-blueprint.md` | **Specification-only** — see Scratch section below |
 
 #### Vanilla HTML5 Canvas (JavaScript) — Single-File Approach
 ```
@@ -236,14 +487,25 @@ After selecting an engine:
 - Export to HTML5 for browser play if platform requires it
 ```
 
-#### Scratch
-```
-- Structure as a Scratch 3.0 project (.sb3)
-- Use clear sprite names and costume names
-- Keep block stacks short and readable
-- Add comments on block stacks explaining the logic
-- Suitable only for the simplest game types
-```
+#### Scratch — Specification-Only Target
+
+**Scratch is a SPECIFICATION-ONLY target. Code Wizard cannot generate `.sb3` binary files** (they are zipped JSON+assets requiring Scratch's editor to author correctly).
+
+When Scratch is selected:
+
+1. **Produce `game/scratch-blueprint.md`** describing every sprite, every costume, and every block stack in pseudocode. Each block stack should look like:
+   ```
+   Sprite: Player
+   Costume: player_idle
+   When [green flag] clicked:
+     forever:
+       if <key [right] pressed?> then
+         change x by (5)
+       end
+   ```
+2. **Provide step-by-step instructions** for the parent to recreate the project at scratch.mit.edu, in the order: create sprites → import costumes → wire block stacks → test.
+3. **Offer to generate an equivalent Vanilla Canvas version** as a runnable fallback so the kid can play immediately while the parent rebuilds in Scratch.
+4. Do NOT attempt to write `.sb3` files, `.sb` files, or any binary Scratch project format.
 
 #### LÖVE (Lua)
 ```
@@ -285,10 +547,17 @@ jobs:
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'game'
       - id: deployment
         uses: actions/deploy-pages@v4
 ```
+
+> **Path is `'game'`, not `'.'`.** The repo root contains `AGENTS.md`, `docs/`, and template files — uploading them would deploy a README instead of the game. The game lives in `game/`.
+>
+> **Godot HTML5 export variant:** use `path: 'game/build/web'` (Godot exports to a subdirectory).
+>
+> **Verification step (mandatory):** after the workflow completes, **visit the published URL**. You should see the game's title screen, NOT a README or directory listing. If you see a README, the `path` is wrong.
+
 2. Enable GitHub Pages in repository settings (Source: GitHub Actions)
 3. The game will be live at `https://[username].github.io/[repo-name]/`
 
@@ -384,6 +653,16 @@ Each logical concern gets its own file. Never put everything in one giant file.
 4. **No account creation or payment flows** — Ever.
 5. **Original code** — Do not copy copyrighted game code verbatim
 
+### Comment Density Rules
+
+Comments are docs for the curious parent and the future-you who reads this code in 6 months. Be deliberate:
+
+- **Every file: 3–8 line header comment** explaining the file's purpose, what it owns, and what it depends on.
+- **Every function: 1–3 line comment on WHY** the function exists (not what — the code shows what). Skip if the function name fully explains it (e.g., `hideMenu()`).
+- **Section banners** inside long files use the form: `// === SECTION NAME ===` (one banner per logical block — e.g., `// === COLLISION ===`).
+- **Inline comments** only for non-obvious logic — branchy math, magic numbers, workarounds. Aim for **roughly 1 inline comment per 15 lines of code**. Higher density is noise.
+- **Never comment obvious code.** `i++; // increment i` is forbidden. So is `let score = 0; // initialize score to zero`.
+
 ---
 
 ## 🚀 Implementation Phases
@@ -468,10 +747,35 @@ Deliverables:
 ```
 
 **If the Implementation Spec is missing or incomplete:**
+
+You **MAY** derive only the following without asking:
+- Art **placeholder colors** (e.g., green = player, red = enemy)
+- **Screen orientation** (defaults to landscape)
+- **Engine selection** (via the deterministic decision tree)
+
+You **MUST NOT** derive any of the following — these come from Dream Weaver / the Game Card:
+- The **core game loop**
+- **Win/lose conditions**
+- Player **abilities and controls**
+- **Enemy types and behaviors**
+- **Scoring rules**
+- Level structure / progression
+
+**Procedure when a required field is missing:**
+
 1. Check `docs/implementation-spec.md`
-2. Check `docs/game-card.md` and derive what you can
-3. If still insufficient, report back to Game Creator with specific questions
-4. Never guess at core mechanics — always clarify
+2. Check `docs/game-card.md`
+3. If still insufficient, **STOP work** and return a **Spec Gap Report** to the Game Creator:
+
+```markdown
+## Spec Gap Report
+- **Missing fields:** [exact list, e.g., "win condition", "enemy behavior"]
+- **What I cannot derive:** [why these need a human/Dream Weaver decision]
+- **What I CAN start on now:** [e.g., "engine scaffolding, placeholder player movement"]
+- **Blocking question(s):** [specific yes/no or pick-from-N questions for the kid]
+```
+
+**Never guess at core mechanics** — silent guesses become bugs the kid notices.
 
 #### From Art Spark — Visual Assets
 

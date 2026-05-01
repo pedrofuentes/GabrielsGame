@@ -46,6 +46,40 @@ Establish the overall sonic identity of the game based on the Game Card:
 - **Key Instruments:** Xylophone, chiptune synths, light drums
 - **Tempo:** 120-130 BPM (upbeat but not frantic)
 - **Reference Feel:** "Like a happy 8-bit adventure with a ukulele"
+- **Key:** C major (default for kids); alternatives G major, F major
+- **Mode:** Major (Ionian) always for primary themes; Lydian for "magical" / dreamlike scenes
+- **Time Signature:** 4/4 default; 6/8 for bouncy / lilting pieces (jigs, swings, lullabies)
+- **Tempo Ranges:** 110–130 BPM gameplay · 70–90 BPM menu/calm · 140–160 BPM boss/intense
+- **Instrumentation:** 3–5 layers max (melody, harmony, bass, rhythm, sparkle) — never more
+- **Melody Range:** C4–C6 (the hummable range; matches a child's vocal comfort zone)
+- **Avoid:** minor 2nd intervals, tritone, chromatic runs, dissonant clusters
+- **Cadence:** end every musical phrase on the tonic (I) or dominant (V) — no half-resolved tension
+```
+
+#### Worked Example A — "Star Fox Forest Adventure" (platformer, age 5)
+```markdown
+- Mood: Cheerful, adventurous, magical
+- Genre: Acoustic folk + light chiptune sparkle
+- Instruments: Ukulele (lead), glockenspiel (sparkle), upright bass (bass), light shaker (rhythm)
+- Key: C major; "magic forest" zone shifts to C Lydian for wonder
+- Time signature: 4/4 gameplay; 6/8 lullaby for the safe-zone music
+- Tempo: 120 BPM gameplay, 80 BPM safe zone, 150 BPM boss
+- Melody range: G4–G5 (very hummable for a 5-year-old)
+- Avoid: any minor key, no horror tropes, no tritone "danger" stings
+- Cadence: every 8-bar phrase ends on C (tonic) — feels resolved and safe
+```
+
+#### Worked Example B — "Rocket Robot Race" (arcade racer, age 7)
+```markdown
+- Mood: Energetic, silly, fast
+- Genre: Chiptune with funk bass
+- Instruments: Square-wave lead, triangle bass, noise hi-hat, sparkle arpeggio
+- Key: G major; final lap modulates up to A major for excitement
+- Time signature: 4/4 throughout
+- Tempo: 128 BPM main race, 90 BPM garage/menu, 160 BPM final lap
+- Melody range: D4–D6
+- Avoid: minor key turns even when player is losing; replace tension with sillier instruments
+- Cadence: 4-bar loops, each ending V→I (D→G) for constant satisfying resolution
 ```
 
 ### 2. 🔔 Create Sound Effects List
@@ -88,6 +122,24 @@ Define every sound effect the game needs, organized by category:
 | High score | Extended celebration with sparkles | 2-3s | Party time! |
 | Checkpoint | Reassuring "ping" with warmth | 0.3s | "You're safe here" feeling |
 
+#### Technical SFX Recipe Table (Procedural / Synthesis Spec)
+
+Use this table alongside the descriptive tables above when implementing SFX procedurally (Web Audio, jsfxr, engine synth nodes). Each row is a precise, reproducible recipe so Code Wizard does not have to guess.
+
+| Sound | Waveform | Freq sweep | Envelope (A/D/S/R) | Vol | Variant |
+|-------|----------|------------|---------------------|-----|---------|
+| Jump | sine | 220→440 Hz over 0.15s | 0 / 0 / 0 / 0.15s exp decay | 0.08 | ±10% pitch |
+| Land | triangle | 180 Hz constant | 0.01 / 0.05 / 0 / 0.10s | 0.06 | none |
+| Collect | sine + sine | 800 Hz then 1200 Hz (80 ms gap) | 0.005 / 0.05 / 0 / 0.15 ×2 | 0.10 | every 5th collect +1 octave |
+| Hurt | sawtooth | 200→100 Hz over 0.3s | 0 / 0.10 / 0 / 0.20s | 0.10 | ±5% pitch |
+| Power-up | square arpeggio | C5–E5–G5–C6, 60 ms each note | 0 / 0.04 / 0 / 0.06 ×4 | 0.09 | none |
+| Win fanfare | sine | C5–E5–G5–C6, 300 ms each note | 0 / 0.10 / 0.10 / 0.15s | 0.10 | none |
+
+**Notes:**
+- Envelope values are in seconds. `A`=attack, `D`=decay, `S`=sustain level (0–1, but here we use sustain *time* of 0 for percussive sounds), `R`=release.
+- `Vol` is the peak `gainNode.gain` value before the master mix. Never exceed `0.15` for procedural oscillators (see Volume Specifications).
+- `Variant` describes the per-trigger randomization or rule. "±10% pitch" means multiply base frequency by `1 + (Math.random()*0.2 - 0.1)`.
+
 ### 3. 🎵 Define Music Requirements
 
 Specify all music tracks needed:
@@ -107,6 +159,20 @@ Specify all music tracks needed:
 - Music should support the mood, never overwhelm
 - Must remain pleasant after the 50th listen (parent sanity test 😅)
 - Melodies should be simple enough for a kid to hum
+
+**Standard Music Structure (use for every track):**
+
+```
+intro (0–4 bars, optional) → loop body (16–32 bars, seamless) → outro tail (1–2 bars, only on transition)
+```
+
+- **Intro:** 0–4 bars, optional. Used for the very first play of a track in a scene; skip on subsequent loops.
+- **Loop body:** 16–32 bars. The repeatable core. Must be seamless — last beat must flow back into bar 1.
+- **Outro tail:** 1–2 bars, played only when transitioning out of the scene (e.g., level complete, scene change). Resolves the phrase.
+- **Loop point:** place at the end of a strong cadence (V→I), on **beat 1** of the next bar. Never mid-phrase.
+- **Shared BPM per scene:** all loops that may play together or crossfade in the same scene MUST share the same BPM (so beats align during crossfade).
+- **Stems (when the AI tool supports them):** export 4 stems — `drums`, `bass`, `melody`, `sparkle` — so Code Wizard can duck/mute layers dynamically (e.g., drop `drums` in low-health calm moments).
+- **Cross-fade rule:** 0.5s crossfade on scene change. Only crossfade between tracks in the **same key** (or relative major/minor) to avoid clashing tonalities. If keys differ, use the outro tail to resolve, then start the new track cleanly.
 
 ### 4. 🌊 Specify Ambient Audio
 
@@ -194,11 +260,13 @@ These principles are **non-negotiable**. Every audio decision must follow them.
 
 | Principle | Implementation |
 |-----------|---------------|
-| **Moderate default volume** | Start at 70% — never 100% |
-| **Never startling** | No sound should be >2x the average volume |
-| **Layered mixing** | SFX > Music > Ambient (in priority) |
-| **Mute support required** | Always support mute and volume controls |
-| **Consistent levels** | All sounds at similar perceived loudness |
+| **Exact gain values, not "moderate"** | `master = 0.7`, `music = 0.3`, `ambient = 0.15`, `sfx = 0.5` (peaks ≤ 0.6) |
+| **Loudness ratio cap** | Loudest SFX MUST be ≤ 1.5× the median SFX loudness |
+| **Procedural oscillator cap** | Per-oscillator `gain.gain` start value MUST NOT exceed `0.15` |
+| **Never startling** | No single sound peak may exceed 2× the running average; no silence-then-bang patterns |
+| **Layered mixing priority** | SFX > Music > Ambient (priority for ducking and channel allocation) |
+| **Mute support required** | Master mute toggled by **`M` key + on-screen UI button**; state persisted between sessions |
+| **Consistent perceived loudness** | Normalize all asset files to −14 LUFS (or as close as the toolchain allows) |
 
 ### 🎭 Tone Principles
 
@@ -311,6 +379,47 @@ function sfxJump()    { playTone(300, 0.15, 'sine', 0.08); }
 function sfxCollect() { playTone(800, 0.1, 'sine', 0.1); setTimeout(() => playTone(1200, 0.15, 'sine', 0.08), 80); }
 function sfxHurt()    { playTone(150, 0.3, 'sawtooth', 0.1); }
 function sfxWin()     { [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f, 0.3, 'sine', 0.1), i*100)); }
+
+// --- Complete procedural SFX library (covers every event in the SFX tables) ---
+// Helper: pitch-swept tone
+function playSweep(f1, f2, dur, type, vol) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(f1, audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(f2, audioCtx.currentTime + dur);
+  gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + dur);
+}
+
+// Player actions
+function sfxLand()       { playTone(180, 0.10, 'triangle', 0.06); }
+function sfxAttack()     { playSweep(600, 200, 0.12, 'square', 0.09); }
+function sfxPowerUp()    { [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f, 0.06, 'square', 0.09), i*60)); }
+
+// Environment
+function sfxDoorOpen()   { playSweep(220, 440, 0.30, 'triangle', 0.08); }
+function sfxSplash()     { playSweep(1200, 400, 0.25, 'sine', 0.07); setTimeout(() => playTone(300, 0.15, 'triangle', 0.05), 60); }
+function sfxBouncePad()  { playSweep(300, 900, 0.18, 'sine', 0.10); }
+function sfxBreakable()  { playTone(150, 0.08, 'square', 0.09); setTimeout(() => playTone(90, 0.12, 'sawtooth', 0.07), 40); }
+
+// UI feedback
+function sfxBtnClick()   { playTone(900, 0.04, 'square', 0.06); }
+function sfxMenuTick()   { playTone(1200, 0.03, 'sine', 0.05); }
+function sfxConfirm()    { playTone(880, 0.08, 'sine', 0.08); setTimeout(() => playTone(1320, 0.10, 'sine', 0.08), 60); }
+function sfxCancel()     { playSweep(800, 400, 0.15, 'sine', 0.07); }
+function sfxError()      { playTone(220, 0.18, 'square', 0.07); setTimeout(() => playTone(180, 0.18, 'square', 0.07), 80); }
+
+// Victory & progress
+function sfxLevelComplete() { [523,659,784,1047,1319].forEach((f,i) => setTimeout(() => playTone(f, 0.30, 'sine', 0.10), i*150)); }
+function sfxAchievement()   { [784,988,1175,1568].forEach((f,i) => setTimeout(() => playTone(f, 0.20, 'triangle', 0.09), i*80)); }
+function sfxGameOver()      { [523,440,392,330].forEach((f,i) => setTimeout(() => playTone(f, 0.30, 'sine', 0.08), i*180));
+                              setTimeout(() => playTone(523, 0.40, 'sine', 0.08), 800); /* encouraging uptick */ }
+function sfxHighScore()     { for (let i=0;i<8;i++) setTimeout(() => playTone(880 + Math.random()*800, 0.12, 'sine', 0.08), i*90); }
+function sfxCheckpoint()    { playTone(880, 0.10, 'sine', 0.08); setTimeout(() => playTone(1320, 0.20, 'sine', 0.08), 80); }
 ```
 
 **When to use procedural audio:**
@@ -340,6 +449,85 @@ cheerful ukulele and xylophone melody, 120 BPM, major key, C major,
 Ambient Prompt: "Gentle forest ambience loop, soft bird chirps, light 
 breeze through leaves, distant babbling brook, peaceful and calming,
 30 seconds, seamless loop, no sudden sounds"
+```
+
+#### Tool-Specific Music Prompt Templates
+
+Generic prompts produce generic results. Use the format the tool was trained on, and always specify key, BPM, structure, instruments, AND a negative list.
+
+**❌ Bad (every tool):**
+```
+Cheerful music for kids game
+```
+*(Too vague — no key, no BPM, no instruments, no length, no loop instruction. The tool will improvise badly.)*
+
+**✅ Good — Suno (bracketed format):**
+```
+[Style: chiptune + acoustic ukulele, kids' platformer]
+[Key: C major]
+[BPM: 120]
+[Time signature: 4/4]
+[Structure: 2-bar intro, 16-bar loop body, no outro]
+[Mood: cheerful, adventurous, warm]
+[Instruments: ukulele lead, glockenspiel sparkle, upright bass, light shaker]
+[Negative: no vocals, no minor key, no dissonance, no sudden dynamics, no drops]
+[Length: 35 seconds]
+[Loop: end on tonic C, last beat must flow seamlessly into bar 1]
+```
+
+**✅ Good — MusicGen (natural language form):**
+```
+A 35-second loopable instrumental track for a children's platformer game.
+Cheerful chiptune blended with acoustic ukulele lead, glockenspiel sparkle,
+upright bass and a light shaker. Tempo 120 BPM, 4/4 time, C major. Two-bar
+intro then a 16-bar repeating body that ends on the tonic so it loops
+seamlessly. Warm, adventurous, kid-friendly. No vocals, no minor key,
+no dissonant intervals, no sudden volume changes, no EDM drops.
+```
+
+#### One Full Prompt Per Music Role
+
+Use these as starting templates; swap key/BPM/instruments to match the game's Audio Style Profile.
+
+**Gameplay loop (Suno):**
+```
+[Style: upbeat chiptune + acoustic, kids' platformer gameplay]
+[Key: C major] [BPM: 124] [Time signature: 4/4]
+[Structure: 4-bar intro, 24-bar seamless loop, 2-bar outro tail]
+[Mood: cheerful, propulsive, hopeful]
+[Instruments: square-wave melody, ukulele rhythm, triangle bass, soft kit, glockenspiel sparkle]
+[Negative: no vocals, no minor key, no tritone, no chromatic runs, no sudden stops]
+[Length: 50s] [Loop: V→I cadence, last bar resolves to C on beat 1]
+```
+
+**Calm / menu (MusicGen):**
+```
+A 40-second loopable instrumental for a children's game menu screen.
+Gentle and welcoming. Music box lead with soft pad and a single warm
+upright bass note per bar. Tempo 80 BPM, 6/8 time, F major. Two-bar
+intro, then a 16-bar body that loops cleanly. Cozy, curious, never sad.
+No vocals, no minor key, no dissonance, no percussion fills, no
+crescendos, no sudden sounds.
+```
+
+**Boss / intense (Suno):**
+```
+[Style: silly-villain chiptune march, kids' boss fight]
+[Key: G major] [BPM: 150] [Time signature: 4/4]
+[Structure: 2-bar intro stinger, 16-bar driving loop, 2-bar outro]
+[Mood: exciting, urgent, COMICAL — never scary]
+[Instruments: tuba bass, square lead, snare-roll kit, kazoo accent, glockenspiel hits]
+[Negative: no minor key, no horror tropes, no dissonance, no growls, no distortion, no jumpscare stings]
+[Length: 32s] [Loop: end V→I in G, beat 1 reset]
+```
+
+**Victory (MusicGen, one-shot, no loop):**
+```
+A 4-second triumphant fanfare for a children's game level-complete screen.
+Bright brass-style square-wave melody plus glockenspiel sparkle. Ascending
+arpeggio C5–E5–G5–C6 then a held C major chord with a final shimmer.
+Tempo 130 BPM, C major, 4/4. Joyful, celebratory, makes a kid smile.
+No vocals, no minor key, no fade-out — clean, confident ending on tonic.
 ```
 
 ---
@@ -405,6 +593,37 @@ Technical notes on how and when to trigger each sound:
 
 ```markdown
 ## Audio Integration Notes
+
+### Standard Audio Contract for Code Wizard
+
+This contract is **binding** — Code Wizard must implement these exact paths, signatures, and limits so Sound Maestro's assets work without rework.
+
+**File layout (relative to project root):**
+```
+game/assets/audio/
+├── sfx/{event}.ogg        # one file per SFX event id (e.g. jump.ogg, collect.ogg)
+├── music/{trackId}.ogg    # one file per music track id
+└── ambient/{zone}.ogg     # one file per ambient zone
+```
+
+**Required `AudioManager` API (engine-agnostic — Phaser, Godot, LÖVE all expose equivalents):**
+
+| Method | Signature | Behavior |
+|--------|-----------|----------|
+| `playSfx` | `playSfx(id, { pitch=1.0, volume=1.0, throttleMs=50 })` | Play SFX `id`. `pitch` multiplies base frequency. `volume` multiplies SFX bus. Throttle: drop call if same `id` was played < `throttleMs` ago. |
+| `playMusic` | `playMusic(id, { fadeIn=0.5, loop=true })` | Start music track. Stops any current music with a 0.5s fade-out unless `crossfadeMusic` is used. |
+| `crossfadeMusic` | `crossfadeMusic(newId, fadeMs=500)` | Crossfade from current track to `newId`. Same-key only (see music structure rules). |
+| `setMasterVolume` | `setMasterVolume(v)` | `v` in `[0, 1]`. Persisted between sessions. |
+| `mute` | `mute(bool)` | Master mute. Bound to `M` key + UI button. |
+
+**Throttle & variation rules:**
+- Any `playSfx` call for the same `id` within **50 ms** of the previous call MUST be ignored (prevents machine-gun stacking).
+- Repeated SFX (jump, collect, hurt) MUST receive **±10% pitch variance** automatically (the AudioManager applies it; Code Wizard does not need to pass `pitch` explicitly).
+
+**Polyphony / pooling:**
+- Maintain a pool of **at least 8** simultaneous SFX nodes/voices.
+- Reuse via **round-robin**: when the 9th SFX fires, recycle the oldest node.
+- Music and ambient have their own dedicated channels and do NOT count against the SFX pool.
 
 ### Trigger Map
 | Game Event | Sound Asset | Trigger Condition | Notes |
@@ -527,18 +746,18 @@ Every game MUST support:
 
 ## 🎶 Quick Reference: Sound Mood Mapping
 
-Use this table to quickly map game themes to audio styles:
+Use this table to quickly map game themes to audio styles. The Key / BPM / Scale columns are concrete defaults — override only when the Game Card specifically calls for it. The "Sample AI Prompt" column is a one-line starter you can hand to Suno or MusicGen.
 
-| Game Theme | Music Style | SFX Style | Ambient | Instruments |
-|------------|-------------|-----------|---------|-------------|
-| Forest adventure | Acoustic folk | Organic, natural | Birds, streams | Guitar, flute, xylophone |
-| Space exploration | Synth, electronic | Sci-fi beeps & boops | Cosmic hum | Synth pads, theremin |
-| Ocean/underwater | Flowy, dreamy | Bubbly, watery | Waves, whale song | Harp, marimba, steel drum |
-| Castle/fantasy | Orchestral lite | Medieval, magical | Wind, distant horns | Strings, brass, bells |
-| City/urban | Funk, upbeat pop | Mechanical, snappy | Traffic, chatter | Piano, bass, drums |
-| Jungle | Tribal, percussive | Exotic, wild | Wildlife, rain | Drums, marimba, woodwinds |
-| Candy/sweet | Bubbly, playful | Pop, sparkle, fizz | Gentle chimes | Glockenspiel, music box |
-| Retro/pixel | Chiptune, 8-bit | Classic game bleeps | Minimal | Square waves, arpeggios |
+| Game Theme | Music Style | SFX Style | Ambient | Instruments | Key | BPM | Scale / Mode | Sample AI Prompt |
+|------------|-------------|-----------|---------|-------------|-----|-----|--------------|------------------|
+| Forest adventure | Acoustic folk | Organic, natural | Birds, streams | Guitar, flute, xylophone | C major | 110–125 | Major (Ionian) | "Loopable acoustic folk for kids' forest game, C major, 120 BPM, ukulele + flute + xylophone, 4/4, no vocals, no minor key, 30s clean loop" |
+| Space exploration | Synth, electronic | Sci-fi beeps & boops | Cosmic hum | Synth pads, theremin | G major | 90–110 | Major / Lydian for wonder | "Loopable dreamy synth for kids' space game, G major Lydian, 100 BPM, warm pads + bell synth, 4/4, no vocals, no scary drones, 40s seamless loop" |
+| Ocean/underwater | Flowy, dreamy | Bubbly, watery | Waves, whale song | Harp, marimba, steel drum | F major | 80–100 | Major | "Gentle loopable underwater theme for kids, F major, 90 BPM, harp + marimba + soft steel drum, 6/8, no vocals, no minor key, 35s seamless" |
+| Castle/fantasy | Orchestral lite | Medieval, magical | Wind, distant horns | Strings, brass, bells | D major | 100–120 | Major / Lydian | "Loopable lite-orchestral fanfare for kids' castle game, D major, 110 BPM, pizzicato strings + bright horn + glockenspiel, 4/4, no minor key, 32s clean loop" |
+| City/urban | Funk, upbeat pop | Mechanical, snappy | Traffic, chatter | Piano, bass, drums | G major | 110–130 | Major | "Loopable funky pop for kids' city game, G major, 120 BPM, electric piano + slap bass + light kit, 4/4, no vocals, no aggressive lyrics, 40s loop" |
+| Jungle | Tribal, percussive | Exotic, wild | Wildlife, rain | Drums, marimba, woodwinds | A major | 115–130 | Major (Mixolydian for groove) | "Loopable kids' jungle theme, A Mixolydian, 124 BPM, tuned hand drums + marimba + pan flute, 4/4, no minor key, no scary animal cries, 30s seamless" |
+| Candy/sweet | Bubbly, playful | Pop, sparkle, fizz | Gentle chimes | Glockenspiel, music box | C major | 105–120 | Major | "Loopable bubblegum-pop for kids' candy game, C major, 112 BPM, glockenspiel + music box + soft kick, 4/4, no vocals, no minor key, 30s loop" |
+| Retro/pixel | Chiptune, 8-bit | Classic game bleeps | Minimal | Square waves, arpeggios | C major | 120–140 | Major | "Loopable 8-bit chiptune for kids' retro platformer, C major, 130 BPM, square lead + triangle bass + noise hat, 4/4, no minor key, 24s seamless loop" |
 
 ---
 

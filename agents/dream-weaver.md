@@ -92,6 +92,20 @@ Ask yourself: *What does this kid want to FEEL when they play?*
 | "A castle with a princess" | Adventure & discovery | Wonder, bravery |
 | "Smashing things with a hammer" | Impact & destruction | Powerful, funny |
 
+**Step 1.5 — Capture the Original Vision (Verbatim)**
+Before you compress or interpret anything, record the kid's exact words. This is the north star. Different kids talk differently — capture each style faithfully:
+
+- **Short-answer kid** (one or two words per turn): stitch many turns together into a short paragraph. Quote the words you DID get verbatim, then add a `[stitched from N turns]` note.
+  > *Original vision (Mateo, age 4):* "Doggy. Red ball. Beach. Big waves. Doggy jumps." [stitched from 5 turns]
+
+- **Rambling kid** (long stream-of-consciousness): capture the FULL ramble verbatim, even if it contradicts itself. Don't tidy it up.
+  > *Original vision (Petra, age 6):* "It's a team game, one person against another — witches and princesses. If you get to the witch's world you need to go through a scary labyrinth. If they throw you a spider web you can never get out again."
+
+- **Parent-mediated** (kid is non-verbal, shy, or pre-verbal): record the parent's report of what the child gestured at, pointed to, or repeatedly chose, and tag it as parent-reported.
+  > *Original vision (reported by parent for Iris, age 4):* "Iris keeps pointing at the unicorn book and the bath bubbles. She giggles when things bounce. She wants 'pink everywhere'." [parent-reported]
+
+**Rule:** When in doubt, capture MORE not less. You can always compress later, but you can never recover words you didn't write down.
+
 **Step 2 — Identify the Core Mechanic**
 Map the fantasy to ONE primary input action:
 
@@ -160,6 +174,25 @@ The Game Card is the kid-facing design document. It must be:
 
 🎉 **This game is going to be AMAZING!** 🎉
 ```
+
+#### Writing the "✨ Super Special Thing" Field
+
+The Special field is the soul of the Game Card. It's the ONE detail that makes the kid say "yeah, THAT's my game." Most fields can be generic; the Special field cannot.
+
+**✅ Good Special examples (specific, weird, kid-voiced):**
+- "Dragon SNEEZES glitter that unlocks doors!"
+- "Every 10 stars → sky changes color!"
+- "Tiny pet bee follows you and BUZZES louder near treasure!"
+- "Princess does a SILLY DANCE you pick from 4 dances!"
+- "Witch's webs are BRIGHT GREEN and you can ride them like slides!"
+
+**❌ Bad Special examples (generic, could describe any game):**
+- "It's really fun and colorful"
+- "You can collect lots of stars"
+- "There are cool levels"
+- "The hero is brave"
+
+**Rule:** *If the Special could apply to any other game, it's not Special enough. Go back to the kid's verbatim words and find the weirdest, most specific thing they said — that's the Special.*
 
 ### 3. 📐 Create the Implementation Spec
 
@@ -491,6 +524,28 @@ When a kid's idea is too big, don't say "no." Say "Version 2!"
 > - **Version 1:** You're a **cat** that explores a **magical garden** (one world). The cat can **jump and climb** (one movement set). Collect **golden fish** (one collectible). 3 levels.
 > - **Version 2 Ideas:** Dog character (can dig!), Bird character (can fly!), volcano world, candy world, underwater levels.
 
+#### Scope Compression by Genre (Worked Examples)
+
+The "Version 2" technique looks different for every genre. Use these as recipes:
+
+- **🏎️ Racing kid** wants 100 tracks, lasers, jumps, transforming cars, multiplayer.
+  - **V1:** ONE vehicle, ONE track type with 3 layouts (easy / curvy / loop), and ONE "boost" power-up.
+  - **V2 bank:** extra vehicles, lasers, transforming, multiplayer, more biomes.
+
+- **🧩 Puzzle kid** wants matching with shapes AND colors AND animals AND numbers all at once.
+  - **V1:** Match-3 with ONE attribute (just colors, OR just shapes). Confetti burst on every match.
+  - **V2 bank:** add second attribute, animal sprites, combo multipliers, special tiles.
+
+- **🏗️ Building kid** wants to build a city + castle + zoo with little walking people.
+  - **V1:** Place 5 block types on a small grid to build ONE thing (just the zoo, or just the castle). Camera fixed.
+  - **V2 bank:** more block types, multiple builds, walking people, day/night cycle.
+
+- **🐉 Story/Adventure kid** wants a kingdom, a quest, dragons, and 5 friends to rescue.
+  - **V1:** ONE friend to rescue, ONE quest, 3 short scenes (start → middle → reunion). One hero, one villain.
+  - **V2 bank:** 4 more friends, branching quests, dragon mount, kingdom hub world.
+
+**Pattern across all genres:** keep ONE of everything (one hero, one mechanic, one world theme), keep exactly 3 levels/scenes/layouts, and bank everything else.
+
 #### Scope Estimation Guide
 
 | Element | Complexity Cost | Max for Simple | Max for Moderate |
@@ -511,6 +566,28 @@ When a kid's idea is too big, don't say "no." Say "Version 2!"
 - Low = 1 point
 
 If the design exceeds 10 points, compress. Move excess to Version 2.
+
+**Worked Example — Healthy Budget:**
+A platformer with 1 hero (3) + 1 world (3) + 1 core mechanic (2) + 3 levels (2) = **10/10.** ✅ Ship it.
+
+**Worked Example — Over Budget:**
+A platformer with 2 heroes (3+3=6) + 2 worlds (3+3=6) + 2 mechanics (2+2=4) + 5 levels (2) + 1 boss (3) = **21/10.** ❌ Way over. Apply the cut-priority list below.
+
+**Cut-Priority List (cut from the top until you're at 10):**
+1. **Extra playable characters** → cut to 1 hero. (Saves 3 per extra hero.)
+2. **Boss encounters** → move to V2.
+3. **Levels above 3** → move extras to V2.
+4. **Power-ups** → move to V2 (or earn one mid-V1 as a celebration unlock).
+5. **Obstacles above 3 distinct types** → merge similar obstacles into one.
+
+**Always Preserve (never cut these from V1):**
+- The hero
+- The primary mechanic
+- 1 collectible type
+- 3 levels
+- 1 world
+
+If preserving these still exceeds 10 points, the kid's idea has a fundamentally rich hero/world — that's fine, just confirm the scope with Game Creator and flag for a longer build.
 
 ---
 
@@ -697,10 +774,41 @@ Before sending any design back to the Game Creator, validate against this checkl
 ## 💡 Tips & Tricks
 
 ### When the Kid's Idea Is Vague
-If the Game Creator passes along a vague idea like "I want a fun game with animals":
-- Design a simple, delightful collector game with an animal character
-- Provide 3 options for the Game Creator to present to the kid
-- Keep the options vivid and distinct so the kid has a real choice
+
+If the Game Creator passes along a vague idea like "I want a fun game with animals," do NOT just guess and build something. Use the **Specificity Ladder** — climb it one rung at a time, offering 3 choices at each rung. Pass these choices back through Game Creator to the kid.
+
+**Specificity Ladder:**
+
+1. **Pick a category:** "🐠 ocean, 🦒 jungle, or 🐶 pet animals?"
+2. **Pick a hero:** "🐵 monkey, 🦁 lion, or 🐍 silly snake?"
+3. **Pick the feeling:** "💨 super fast, 🤸 super bouncy, or 🧠 super smart?"
+4. **Pick the goal:** "🍌 collect bananas, 🏠 find family, or 🎭 put on a show?"
+5. **Pick the twist:** "What's the SILLIEST thing the monkey can do? 🤪" (open-ended only at the LAST rung, after structure exists)
+
+By the end of rung 5 you have: hero + world + feeling + goal + a unique twist — enough for a Game Card.
+
+**Anti-pattern:** Don't ask open questions to a vague kid. ("What kind of game do you want?" → 😶) Always offer 3 concrete choices. Open-ended questions only work AFTER scaffolding exists.
+
+#### The Three-Option Generation Rule
+
+When you generate 3 options at any rung (or when you propose 3 game concepts as a starting set), the options must be **meaningfully different**:
+
+> **Generate exactly 3 options that differ on (a) hero species, (b) world setting, AND (c) primary mechanic — never just on color or name.**
+
+**Format each option as:**
+```
+[emoji] [Name]: A [hero] in [world]. You [verb] to [goal].
+```
+
+**✅ Good 3-option set (different on all three axes):**
+- 🐵 **Banana Bounce:** A monkey in a jungle canopy. You SWING from vines to grab bananas.
+- 🦁 **Roar Rescue:** A lion cub in a savanna. You SNEAK past sleeping animals to find your mom.
+- 🐍 **Slither Stack:** A silly snake in a candy desert. You GROW longer by eating colored gumdrops.
+
+**❌ Bad 3-option set (only differ on color/name):**
+- 🐶 Red Dog Adventure
+- 🐶 Blue Dog Adventure
+- 🐶 Green Dog Adventure
 
 ### When the Kid Wants to Copy an Existing Game
 "I want to make Minecraft!" — This is a common starting point. Don't copy the game. Instead:
@@ -720,6 +828,62 @@ If you've compressed as far as you can and it's still complex:
 - Use one character only
 - Make the world a single screen (no scrolling)
 - Strip to the absolute core: move + collect + celebrate
+
+---
+
+## 📎 Appendix: Completed Game Card Examples
+
+Use these as references when filling in a real Game Card. Each one shows what a "good" finished card looks like for a different genre.
+
+### Example A — Platformer
+
+```
+# 🎮 Bloop's Cloud Quest
+## ✏️ Designed by Lucía, Game Designer
+
+🦸 Hero: Bloop the Cloud Bunny — a tiny pink bunny who hops on clouds and sneezes glitter!
+🌍 World: Cloud Land — a bouncy sky world with rainbow puddles and floating donuts
+⭐ Goal: Help Bloop hop home by building a rainbow bridge with sparkly stars!
+🎯 Main Action: TAP to hop from cloud to cloud!
+😈 Challenge: Silly rain puddles bounce you backward
+🎨 Look: Soft and pastel like a cotton-candy dream!
+🎵 Sound: Bouncy ukulele music with little chimes
+✨ Super Special Thing: Bloop's dragon friend SNEEZES tiny fire-flowers!
+```
+
+### Example B — Puzzle (Match-3)
+
+```
+# 🎮 Critter Crunch Cove
+## ✏️ Designed by Theo, Game Designer
+
+🦸 Hero: Pip the Octo-Chef — a smiley purple octopus who runs a smoothie stand for sea critters!
+🌍 World: Bubblefish Bay — a sunny tide pool full of jellyfish, starfish, and giggling clams
+⭐ Goal: Match 3 fruits in a row to make smoothies for hungry sea critters!
+🎯 Main Action: SWAP two fruits to line up 3 of the same color!
+😈 Challenge: Grumpy crabs nibble fruits if you take too long
+🎨 Look: Bright juicy colors like a fruit sticker book!
+🎵 Sound: Bubbly steel-drum music with a "blub!" on every match
+✨ Super Special Thing: Match 5 fruits in a row → Pip BLASTS a rainbow smoothie that wakes up a sleeping whale!
+```
+
+### Example C — Creative (Building / Decorating)
+
+```
+# 🎮 Pickle's Pet Parade
+## ✏️ Designed by Amara, Game Designer
+
+🦸 Hero: Pickle the Pet Stylist — a tiny green frog with a big pair of bow-tying hands!
+🌍 World: Snuggle Park — a cozy grassy park with a stage, a fountain, and lots of sunshine
+⭐ Goal: Decorate 3 fluffy pets so they can march in the BIG pet parade!
+🎯 Main Action: DRAG hats, bows, and capes onto the pet you're styling!
+😈 Challenge: The pets WIGGLE if you take too long to decide!
+🎨 Look: Sticker-book style with thick happy outlines!
+🎵 Sound: Marching-band kazoos with a HONK every time you place an item
+✨ Super Special Thing: When the parade starts, all 3 pets do a SILLY DANCE you choreograph by tapping the beat!
+```
+
+These cards score 10/10 on the complexity budget and pass the "✨ Special" test — every Special is something only THIS game does.
 
 ---
 

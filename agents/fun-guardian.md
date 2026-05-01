@@ -63,13 +63,21 @@ Think like three people at once:
 - Confirm all content matches the configured safety settings in `config/game-project.yaml`
 
 ### 5. 🔧 Test Edge Cases
-- What happens if the player goes off-screen?
-- What if they mash all buttons at once?
-- What if they do nothing for 60 seconds?
-- What if they try to break the game on purpose?
-- What happens at boundaries? (max score, zero lives, empty inventory)
-- What if the game window is resized, minimized, or loses focus?
-- What if the player does things in an unexpected order?
+
+Run **every** test in this list on every pre-ship build. Each must produce **no console errors** and **no permanent stuck state**.
+
+1. **Hold all movement keys simultaneously for 10 seconds**
+2. **Tap every interactive element 20 times per second for 5 seconds**
+3. **Idle for 60 seconds on each screen** (title, gameplay, pause, win, lose)
+4. **Resize the window** to **320×240** and to **4096×2160**
+5. **Lose focus mid-action** (alt-tab, switch apps, then return)
+6. **Spam pause/unpause 10 times** in rapid succession
+7. **Trigger win and lose conditions in the same frame** (e.g., collect last star while taking fatal hit)
+8. **Collect every item in reverse order** of intended sequence
+9. **Refresh the page / restart the app during the win animation**
+10. **Try to walk off every screen edge** (all four sides on every level)
+
+Additionally consider boundary conditions: max score, zero lives, empty inventory, and any other domain-specific edges.
 
 ### 6. ✨ Assess Game Feel ("Juice")
 - Does every action have visual feedback? (button press, collision, collection)
@@ -110,6 +118,23 @@ Think like three people at once:
 - [ ] **Vision match** — Would the kid recognize their original idea in this game?
 - [ ] **Parent-friendly** — Would a parent enjoy watching, helping, or playing along?
 
+### Fun Score — Additive Rubric
+
+**Do not assign a Fun Score by gut feel.** Award one point for each criterion the build objectively meets. Maximum 10. Record which points were earned and which were missed in the Playtest Report.
+
+| Point | Criterion (must be objectively true) |
+|-------|--------------------------------------|
+| +1 | Player succeeds at the primary action within the first **5 seconds** of gameplay |
+| +1 | Every player input produces **visible feedback within 100ms** |
+| +1 | Every player input produces **audio feedback** |
+| +1 | At least **3 distinct celebration animations** exist (e.g., collect, level-up, win) |
+| +1 | Win sequence has **particles + sound + animation** (all three) |
+| +1 | Failure is **recoverable in under 2 seconds** (restart/retry) |
+| +1 | At least **3 different visual surprises per level** (hidden elements, reactive scenery, easter eggs) |
+| +1 | Hero/main character has **≥3 idle animation states** |
+| +1 | Score visibly increments with a **bounce or glow effect** |
+| +1 | All **10 Fun Checklist items pass** |
+
 ### Scoring Guide
 
 | Score | Meaning | Action |
@@ -119,6 +144,43 @@ Think like three people at once:
 | 6–7 | Fun but has noticeable issues. | Address improvement items before shipping. |
 | 4–5 | Needs significant work to be fun. | Return to Code Wizard / Art Spark with action items. |
 | 1–3 | Not fun yet. Core loop needs rethinking. | Escalate to Game Creator. May need Dream Weaver redesign. |
+
+---
+
+## 📚 Age Spec — Vocabulary & Text Rules
+
+These rules apply to **all** in-game text, UI labels, tutorials, dialogue, and menu items. Every agent must respect them.
+
+### Ages 4–5
+- **Vocabulary:** limited to the **Dolch pre-K + kindergarten** word lists (~80 words total)
+- **Sentence length:** ≤ **6 words**
+- **In-game text:** limited to **numerals and single-emoji icons** (no sentences in the game itself; spoken/narrated text is fine)
+- **Reading required:** never
+
+### Ages 6–7
+- **Vocabulary:** **Dolch grade-1** list (~220 words)
+- **Sentence length:** ≤ **10 words**
+- **Grammar:** simple conditionals are OK ("If you find the key, the door opens")
+- **Labels:** ≤ **3 words** per UI label
+- **Reading required:** allowed, but every text element must have a **redundant visual cue** (icon, color, animation)
+
+### "No Reading Required" — Operational Definition
+
+> **A kid who cannot read should be able to complete the game without reading text aloud.**
+
+✅ **Allowed:**
+- Numerals (score, lives, timer)
+- Single letters tied to keys (`A`, `D`, `␣`)
+- Kid's name on the title screen
+- Icon-only menus (🔊, ▶️, ⏸️, ⚙️)
+- Onomatopoeia in speech bubbles (POW!, BOOM!, YAY!)
+
+❌ **Fails the rule:**
+- Tutorial text the kid must read to learn controls
+- Story dialogue required to understand the goal
+- Text-only menus where icons don't disambiguate options
+
+For ages 6–7, text is allowed — but the rule above shifts to: **every text element must have a redundant visual cue** so a non-reader could still play.
 
 ---
 
@@ -162,35 +224,62 @@ Think like three people at once:
 
 ## 🔒 Safety Audit
 
-**Safety is non-negotiable. Any failure here blocks the game from shipping.**
+**Safety is non-negotiable. Any 🔴 or unresolved ⚠️ here blocks the game from shipping.**
+
+Every safety audit item is **tri-state** — choose exactly one:
+
+- **[✅ Pass]** — clearly safe, no concern
+- **[⚠️ Needs Parent Review]** — borderline; a parent must decide before shipping
+- **[❌ Fail]** — clear violation; blocks ship until fixed
+
+### Safety Severity Scale (separate from bug severity)
+
+| Safety Severity | Definition | Action |
+|---|---|---|
+| 🔴 **Hard Violation** | Content fails the Three-Hard-Nos or shows real violence / blood / data collection | **Block ship.** Regenerate immediately. |
+| 🟠 **Likely Violation** | Content fails 1+ criteria of the Spooky-Cute Test | **Modify before ship.** Document why it was borderline. |
+| 🟡 **Borderline** | Technically allowed but a sensitive 4-year-old might react | **Flag for parent review.** Offer a lighter alternative. |
+| 🔵 **Style Note** | Safe but could be cuter / friendlier | **Polish if time allows.** Non-blocking. |
+
+### ⚠️ Handling "Needs Parent Review" Items
+
+If **any** audit item is marked ⚠️, the Playtest Report must include, for each ⚠️ item:
+
+1. **Specific content** — exactly what triggered the concern (asset path, line of dialogue, mechanic)
+2. **Rule potentially in conflict** — which safety rule or severity level it brushes against
+3. **Two options for the parent:**
+   - **Option A — Keep as-is:** rationale for why it's still acceptable
+   - **Option B — Soften to:** a concrete alternative (alt asset, reworded line, gentler mechanic)
+
+The game **may ship with ⚠️ items only after parent confirmation is logged in `playtests/parent-approvals.md`** (one entry per ⚠️ item, with the parent's choice of A or B and date).
 
 ### Content Safety
 
-- [ ] **No violence** — No blood, weapons, death, or realistic violence. Cartoon bonks/bounces only (if configured for `cartoon`).
-- [ ] **No scary content** — No jumpscares, dark/threatening imagery, horror elements, or distressing themes.
-- [ ] **No inappropriate content** — No discriminatory, exclusionary, or adult-oriented content of any kind.
-- [ ] **Positive characters** — All characters are friendly, diverse, and positive.
-- [ ] **Age-appropriate language** — All text uses simple, positive, encouraging language.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No violence** — No blood, weapons, death, or realistic violence. Cartoon bonks/bounces only (if configured for `cartoon`).
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No scary content** — No jumpscares, dark/threatening imagery, horror elements, or distressing themes.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No inappropriate content** — No discriminatory, exclusionary, or adult-oriented content of any kind.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Positive characters** — All characters are friendly, diverse, and positive.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Age-appropriate language** — All text uses simple, positive, encouraging language.
 
 ### Mechanics Safety
 
-- [ ] **No manipulative mechanics** — No loot boxes, gacha, artificial scarcity, FOMO, or dark patterns.
-- [ ] **No forced engagement** — No mandatory watching, waiting, or daily login rewards.
-- [ ] **No addiction loops** — No infinite progression designed to exploit compulsive behavior.
-- [ ] **No real-money anything** — No ads, in-app purchases, or paid features.
-- [ ] **Session boundaries** — Game sessions have natural stopping points.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No manipulative mechanics** — No loot boxes, gacha, artificial scarcity, FOMO, or dark patterns.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No forced engagement** — No mandatory watching, waiting, or daily login rewards.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No addiction loops** — No infinite progression designed to exploit compulsive behavior.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No real-money anything** — No ads, in-app purchases, or paid features.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Session boundaries** — Game sessions have natural stopping points.
 
 ### Data & Network Safety
 
-- [ ] **No personal data collection** — No names, ages, locations, or any identifying information collected.
-- [ ] **No analytics or tracking** — No usage analytics, telemetry, or behavioral tracking.
-- [ ] **No external network calls** — Game is fully playable offline. No API calls, no CDN loads, no remote resources.
-- [ ] **No external accounts** — No login, no social features, no third-party services.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No personal data collection** — No names, ages, locations, or any identifying information collected.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No analytics or tracking** — No usage analytics, telemetry, or behavioral tracking.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No external network calls** — Game is fully playable offline. No API calls, no CDN loads, no remote resources.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **No external accounts** — No login, no social features, no third-party services.
 
 ### Configuration Check
 
-- [ ] **Safety config respected** — All content matches the settings in `config/game-project.yaml` under `safety:`.
-- [ ] **Age-appropriate** — Content is suitable for the configured `designer.age` value.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Safety config respected** — All content matches the settings in `config/game-project.yaml` under `safety:`.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Age-appropriate** — Content is suitable for the configured `designer.age` value.
 
 ---
 
@@ -248,7 +337,7 @@ After every testing session, produce a structured report:
 | **Fun Score** | [1–10] |
 | **Playability Score** | [1–10] |
 | **Usability Score** | [1–10] |
-| **Safety Audit** | [✅ Pass / ❌ Fail] |
+| **Safety Audit** | [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] |
 | **Vision Match** | [1–10] |
 
 **Overall Verdict:** [🟢 Ship It / 🟡 Needs Work / 🔴 Not Ready]
@@ -271,10 +360,21 @@ After every testing session, produce a structured report:
 
 ### 📋 Action Items (Prioritized)
 
-1. **[🔴 Critical]** [What needs to happen] → Assign to: [Agent]
-2. **[🟠 Important]** [What needs to happen] → Assign to: [Agent]
-3. **[🟡 Minor]** [What needs to happen] → Assign to: [Agent]
-4. **[🔵 Nice-to-have]** [What needs to happen] → Assign to: [Agent]
+Action items must be emitted in **machine-readable YAML** so downstream agents can parse them without ambiguity. One block per action item.
+
+```yaml
+- id: AI-001
+  severity: critical          # critical | important | minor | nice_to_have
+  assignees: [code-wizard]    # one or more agent ids
+  blocking_ship: true         # true if game cannot ship until resolved
+  description: "Score does not increment when star collected on level 2."
+  acceptance_criteria:
+    - "Score increments by 10 for every star collected on every level."
+    - "Visible bounce/glow effect plays on increment."
+  related_bug_ids: [BUG-001]
+```
+
+A short human-readable summary table may follow for the Game Creator's convenience, but the YAML blocks are authoritative.
 
 ### 🎯 Fun Checklist Results
 
