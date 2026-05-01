@@ -162,6 +162,54 @@ func transition(next: State) -> void:
 
 Scenes connect to `state_changed` and run their own enter/exit logic.
 
+#### Level Progression Pattern
+
+Most kid games have a small ordered list of levels with escalating difficulty. Store level configs in a single array and advance on `WIN`:
+
+```javascript
+// === LEVEL PROGRESSION ===
+// Stores level configs in an array; advances on WIN.
+const LEVELS = [
+  { id: 1, spawnRate: 0.5, speed: 150, target: 5, time: 45 },
+  { id: 2, spawnRate: 0.7, speed: 180, target: 8, time: 50 },
+  { id: 3, spawnRate: 1.0, speed: 220, target: 12, time: 55 }
+];
+let currentLevel = 0;
+
+function nextLevel() {
+  currentLevel++;
+  if (currentLevel >= LEVELS.length) {
+    currentLevel = 0;  // loop or show "You finished all levels!"
+    game.transition('MENU');
+  } else {
+    game.transition('PLAYING'); // onEnter reads LEVELS[currentLevel]
+  }
+}
+```
+
+Keep level configs **data, not code** — Dream Weaver should be able to tweak `spawnRate`, `speed`, `target`, and `time` without reading game logic.
+
+#### Companion / Follower Entity Pattern
+
+When the kid asks for a sidekick (pet, fairy, friend), use a lerp-based follower instead of pathfinding — it's smoother, simpler, and reads as "magical companion":
+
+```javascript
+// === COMPANION FOLLOWER (lerp-based) ===
+// Sidekick follows the hero with a smooth offset.
+const companion = { x: 0, y: 0 };
+const FOLLOW_OFFSET = { x: -60, y: 20 }; // behind and slightly below
+const FOLLOW_SPEED = 3; // higher = snappier follow
+
+function updateCompanion(dt, heroX, heroY) {
+  const targetX = heroX + FOLLOW_OFFSET.x;
+  const targetY = heroY + FOLLOW_OFFSET.y;
+  companion.x += (targetX - companion.x) * Math.min(1, FOLLOW_SPEED * dt);
+  companion.y += (targetY - companion.y) * Math.min(1, FOLLOW_SPEED * dt);
+}
+```
+
+The `Math.min(1, ...)` clamp keeps the follow stable on long frames (tab-switch, GC pause).
+
 ### 5. Input Handling
 
 Design input for small hands and developing motor skills:
@@ -185,6 +233,40 @@ Design input for small hands and developing motor skills:
 - **Touch:** Tap on the visible pause button (counts as tap, not drag)
 
 The pause button must be present on screen during the `PLAYING` state on all platforms. Do NOT hide it on desktop "because they have a keyboard."
+
+**Gamepad pause — minimal implementation:**
+
+```javascript
+// Gamepad: Start button (button index 9) pauses
+window.addEventListener('gamepadconnected', () => { /* gamepad available */ });
+function checkGamepad() {
+  const gp = navigator.getGamepads()[0];
+  if (gp && gp.buttons[9]?.pressed) input.pause = true;
+}
+// Call checkGamepad() in the main loop before game.tick(dt)
+```
+
+#### Visual Timer Implementation
+
+Per the Gentle Failure Standard (no audible ticking), every timer must be **visual only** — a shrinking bar that shifts color when low:
+
+```javascript
+// === VISUAL TIMER BAR (Gentle Failure — no audible ticking) ===
+function drawTimerBar(ctx, timeLeft, totalTime, x, y, width, height) {
+  const pct = Math.max(0, timeLeft / totalTime);
+  // Background
+  ctx.fillStyle = '#ffffff40';
+  ctx.fillRect(x, y, width, height);
+  // Fill — color shifts from blue to coral when low
+  ctx.fillStyle = pct > 0.3 ? '#4ECDC4' : '#FF6B6B';
+  ctx.fillRect(x, y, width * pct, height);
+  // Border
+  ctx.strokeStyle = '#ffffff80';
+  ctx.strokeRect(x, y, width, height);
+}
+```
+
+Never play a tick/beep on each second — kids interpret it as anxiety.
 
 #### Mobile-Ready HTML Boilerplate (web targets)
 
@@ -227,7 +309,7 @@ Every web game's `index.html` MUST include:
 
 #### Resolution from Config
 
-Read the target resolution from `config/game-project.yaml` (key: `display.resolution`). All resolutions are **16:9**:
+Read the target resolution from `config/game-project.yaml` (key: `art.resolution`). All resolutions are **16:9**:
 
 | Config value | Pixel dimensions |
 |--------------|------------------|
@@ -477,6 +559,30 @@ Use exactly the layout below for the chosen engine. **Do not invent additional f
 - Matter.js physics only if complex shapes/joints are needed
 - Serve locally with a simple HTTP server for testing
 ```
+
+#### `config.js` — Required Structure
+
+Every multi-file scaffold (Phaser, LÖVE, Godot via autoload) MUST include a single `config.js` (or equivalent) holding **all tunable constants**. Designers and Dream Weaver edit this file; nobody hunts magic numbers across the codebase.
+
+```javascript
+// === config.js — Game Constants ===
+// All tunable values in one place. Speeds in px/s, sizes in px @720p.
+const CFG = {
+  CANVAS: { W: 1280, H: 720 },
+  PLAYER: { SPEED: 300, JUMP: -340, GRAVITY: 900, SIZE: 48 },
+  COMPANION: { FOLLOW_SPEED: 3, OFFSET_X: -60, OFFSET_Y: 20, SIZE: 36 },
+  COLLECTIBLE: { SIZE: 24, SCORE: 10 },
+  OBSTACLE: { PUSH_FORCE: 120 },
+  LEVELS: [ /* see LEVELS array */ ],
+  AUDIO: { MASTER: 0.7, MUSIC: 0.3, SFX: 0.5 },
+  COLORS: { /* from Art Spark palette.json */ }
+};
+```
+
+**Rules:**
+- All speeds in **px/s** (not px/frame), all sizes in **px @720p reference resolution**.
+- `CFG.COLORS` must be sourced from Art Spark's `palette.json` — never invent colors here.
+- `CFG.LEVELS` mirrors the Level Progression array — keep both in sync.
 
 #### Godot (GDScript)
 ```
@@ -921,15 +1027,18 @@ Always use these patterns to prevent bugs from reaching the kid:
 
 ```javascript
 // PATTERN: Safe asset loading
-function loadAssetSafe(key, path) {
-    try {
-        this.load.image(key, path);
-    } catch (e) {
-        console.warn(`Asset not found: ${path}, using placeholder`);
-        // Create a colored rectangle as placeholder
-        this.createPlaceholder(key);
-    }
+// WRONG: this.load.image() queues a load — it does NOT throw on missing files,
+// so wrapping it in try/catch catches nothing. Use Phaser's loaderror event instead.
+function registerSafeAssetLoading(scene) {
+    scene.load.on('loaderror', (file) => {
+        console.warn(`Asset missing: ${file.key} — using placeholder`);
+        // Generate a colored rectangle placeholder at runtime in create()
+        scene.placeholdersNeeded = scene.placeholdersNeeded || new Set();
+        scene.placeholdersNeeded.add(file.key);
+    });
 }
+// In create(): for each key in scene.placeholdersNeeded, generate a colored
+// rectangle texture via scene.add.graphics() + generateTexture(key, w, h).
 
 // PATTERN: Safe state transition
 function changeState(newState) {

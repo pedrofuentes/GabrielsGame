@@ -55,6 +55,18 @@ Think like three people at once:
 - Are there loading screens? Are they too long?
 - Does the game communicate state clearly? (Am I winning? What's my score? What do I do next?)
 
+#### Minimum Sizes (Hard Rules)
+
+| Element | Min size @1080p | Min size @720p |
+|---------|----------------|----------------|
+| Score/HUD text | 48px | 32px |
+| Menu text | 64px | 42px |
+| Button labels | 48px | 32px |
+| Interactive touch targets | 96×96px | 64×64px |
+| Icons in HUD | 64×64px | 42×42px |
+
+All text MUST have a contrasting outline or shadow (≥2px) for readability against any background.
+
 ### 4. 🔒 Verify Safety Compliance
 - Audit all content against safety rules (see Safety Audit section)
 - Check for inappropriate content in art, text, and audio
@@ -117,6 +129,7 @@ Additionally consider boundary conditions: max score, zero lives, empty inventor
 - [ ] **Right session length** — Is a single game session 5–10 minutes per level/round?
 - [ ] **Vision match** — Would the kid recognize their original idea in this game?
 - [ ] **Parent-friendly** — Would a parent enjoy watching, helping, or playing along?
+- [ ] **Multiplayer equity** — In competitive modes, BOTH players get celebration moments; no "loser" label, no sad imagery for the losing player; show both scores with equal visual treatment
 
 ### Fun Score — Additive Rubric
 
@@ -280,6 +293,23 @@ The game **may ship with ⚠️ items only after parent confirmation is logged i
 
 - [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Safety config respected** — All content matches the settings in `config/game-project.yaml` under `safety:`.
 - [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Age-appropriate** — Content is suitable for the configured `designer.age` value.
+- [✅ Pass / ⚠️ Needs Parent Review / ❌ Fail] **Language consistency** — If `designer.language` is `"es"`, all in-game text is in Spanish. If `"en"`, all in English. If `"both"`, every text element has both a text label AND a redundant icon so non-readers of either language can navigate.
+
+---
+
+## 💚 Gentle Failure Compliance Audit
+
+**Every failure/loss state must pass ALL of these:**
+
+- [ ] No "Game Over" text — use "Try Again!", "Almost!", "One more time!" or equivalent
+- [ ] Respawn/retry available within ≤2 seconds
+- [ ] Player character is NEVER shown sad, crying, or defeated — use surprised, dizzy (stars overhead), or laughing
+- [ ] Failure music is major-key or playful — never minor-key, somber, or silent
+- [ ] Music transitions via crossfade (≥0.3s) — never abrupt cut
+- [ ] After 3 consecutive failures on same challenge, game auto-offers help (slow down, hint, lower difficulty)
+- [ ] Timer (if any) is visual only (shrinking bar, color change) — no audible ticking
+- [ ] The words "lose", "lost", "fail", "dead", "death", "killed" never appear in player-facing text
+- [ ] Retry button has both text AND icon (≥96px touch target) — passes "no reading required" for ages 4-5
 
 ---
 
@@ -481,6 +511,33 @@ Before you begin testing, verify:
 5. **Regression test** — Verify all previously reported bugs are fixed.
 6. **Parent perspective** — Would a parent feel good about this game?
 7. Produce **final Playtest Report** with ship/no-ship verdict.
+
+### Regression Verification Protocol
+
+After fixes are applied from a Playtest Report, re-test as follows:
+
+1. **For each action item marked `blocking_ship: true`:**
+   - Run the exact reproduction steps from the original bug report
+   - Verify the acceptance criteria are met (check each bullet)
+   - Mark as ✅ Verified or ❌ Still Failing in the re-test report
+
+2. **Smoke test unchanged features:** Play through each level once to confirm fixes didn't break existing functionality
+
+3. **Re-score:** Run the Fun Score rubric again and compare to the previous score. Score should improve by ≥2 points per fix cycle.
+
+4. **Format:** Append a "Re-Test Results" section to the existing Playtest Report:
+
+```markdown
+### Re-Test Results — [Date]
+| Action Item | Status | Notes |
+|-------------|--------|-------|
+| AI-001 | ✅ Verified | Ghost now fades in over 600ms with friendly wave |
+| AI-002 | ✅ Verified | Unicorn shows dizzy stars, major-key jingle plays |
+| AI-003 | ❌ Still Failing | Music still cuts abruptly — crossfade not implemented |
+
+Fun Score: [previous] → [new] (+[delta])
+Verdict: [🟢/🟡/🔴]
+```
 
 ---
 

@@ -421,6 +421,28 @@ clean, friendly, with no gradient inside the button fill, no text, no watermark,
 no realistic photo style. Children's mobile game UI, ages 4 to 7.
 ```
 
+##### 👯 Multi-Character Prompt (Hero + Companion Together)
+
+**❌ Bad:** `"unicorn and cat, cartoon, cute"` — no proportions, no shared style anchor, no relative scale, no positional guidance → tools render two unrelated illustrations side by side.
+
+**✅ Good (Midjourney v6):**
+
+```text
+STYLE DNA: [paste from style guide]
+chibi cartoon unicorn hero (256px tall) standing next to a small cat companion (180px tall),
+unicorn on left facing right, cat on right also facing right, cat looking up at unicorn adoringly,
+both characters share 2px #5C4D7D outline and soft pastel shading, same art style,
+unicorn is 1.4x taller than cat, matching eye proportions (30% face width each),
+white background, full body, character lineup sheet, children's storybook illustration
+--ar 3:2 --style raw --no realistic, scary, text, watermark, separate art styles
+```
+
+**DALL-E 3 adaptation** — convert to natural language: *"A character lineup of two friends standing side by side, both facing right: a chibi cartoon unicorn hero on the left (about 256 pixels tall) and a small cat companion on the right (about 180 pixels tall, 65–75% of the unicorn's height) gazing up at the unicorn adoringly. Both share the same 2-pixel #5C4D7D outline, soft pastel cel-shading, and matching eye proportions (30% of face width). White background, full body, children's storybook illustration."*
+
+**SDXL adaptation** — comma-separated tags with weights and a separate negative field: `(chibi unicorn hero:1.3), (small cat companion:1.2), (both facing right:1.2), (unicorn 1.4x taller than cat:1.1), (matching 2px #5C4D7D outline:1.2), (matching 30% eye-to-face ratio:1.1), pastel cel-shade, character lineup sheet, white background, children's storybook illustration` + NEGATIVE: `separate art styles, mismatched outlines, opposing directions, realistic, scary, text, watermark`.
+
+**The key difference across tools:** Midjourney uses comma-separated phrases + flags, DALL-E uses one descriptive sentence, SDXL uses weighted tags + a separate negative prompt. The Style DNA, scale ratio, shared outline, and matching eye ratio MUST appear in all three.
+
 #### Generic Prompt Template (Fallback)
 
 ```markdown
@@ -811,6 +833,14 @@ Use these ratios verbatim. They produce instantly readable, "kid-cute" silhouett
 - **Claws** = rounded paw-pads, no visible nails
 - **Wings** = rounded scallop edges, no leathery points
 
+##### Hero + Companion (on-screen together)
+- Companion = 65–75% of hero's height (big enough to notice, small enough to not compete)
+- Position: companion trails 60–80px behind hero horizontally, 10–30px below
+- Both share the same outline weight and style (same "family")
+- Companion eyes match hero eye-to-face ratio (visual kinship)
+- If hero faces right, companion faces right too (never opposing)
+- Example: Hero is 256px tall → Companion is 170–192px tall
+
 ### 2. Rounded, Friendly Shapes
 
 Sharp corners and pointed shapes feel aggressive or dangerous to young children.
@@ -930,6 +960,7 @@ Translate the kid's mood word into concrete, measurable visual parameters. Pick 
 | **Adventurous** | 70–85% | 3px solid | `cubic out` | medium (4–6) | subtle bob 4px / 0.8s |
 | **Cozy** | 50–70% (warm hues) | 3px soft brown | `sine in-out` | low (2–4 dust motes) | gentle sway 2° / 1.5s |
 | **Spooky-cute** | 55–70% (cool hues) | 3px navy + 2px glow | `ease in-out` slight overshoot 1.05× | medium drifting (4–6) | wobble 5% / 1.0s |
+| **Dreamy/Whimsical** | 45–65% + shimmer | 2px soft + sparkle dots | sine ease-in-out, slow | medium + trails + soft glow halos | floating drift 3px/2.5s |
 
 **How to use the table:**
 1. Read the Mood field from the Game Card.

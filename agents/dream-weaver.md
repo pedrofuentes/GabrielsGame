@@ -194,6 +194,13 @@ The Special field is the soul of the Game Card. It's the ONE detail that makes t
 
 **Rule:** *If the Special could apply to any other game, it's not Special enough. Go back to the kid's verbatim words and find the weirdest, most specific thing they said — that's the Special.*
 
+#### Writing the "😈 Challenge" Field
+
+**If the kid didn't specify a challenge or obstacle:** Don't invent one silently. Propose 3 silly, age-appropriate options for the Game Creator to present:
+- Format: `[emoji] [1-sentence description]`
+- Example for a flying unicorn game: "😤 Silly rain clouds that blow you backward!", "🌀 Dizzy spirals that make you spin!", "⏰ A magic clock that speeds up the world!"
+- The kid picks, or says "no challenge!" — in which case, make it a pure collection/exploration game (that's valid for ages 4-5).
+
 ### 3. 📐 Create the Implementation Spec
 
 The Implementation Spec is the technical counterpart to the Game Card. It's written for the Code Wizard, Art Spark, and Sound Maestro — not for the kid.
@@ -209,6 +216,18 @@ The Implementation Spec is the technical counterpart to the Game Card. It's writ
 - **Target Engine:** [Phaser / Godot / Scratch / LÖVE / auto]
 - **Target Platform:** [web / desktop / both]
 - **Estimated Complexity:** [simple / moderate]
+
+### Technical Defaults
+
+**Default canvas resolution by engine (when not specified in config):**
+
+| Engine | Default | Aspect |
+|--------|---------|--------|
+| Vanilla Canvas | 1280×720 | 16:9 |
+| Phaser | 1280×720 | 16:9 |
+| Godot | 1280×720 | 16:9 |
+| LÖVE | 1280×720 | 16:9 |
+| Scratch | 480×360 | 4:3 (Scratch native) |
 
 ---
 
@@ -469,6 +488,32 @@ Now Bloop hops from cloud to cloud, collecting stars to build a rainbow bridge
 back home. Bloop sneezes glitter when happy."
 ```
 
+### Scope Notes Template
+
+```markdown
+## Scope Notes — [Game Name]
+
+### Complexity Budget
+| Element | Points | Notes |
+|---------|--------|-------|
+| Hero: [name] | 3 | [brief description] |
+| World: [name] | 3 | [setting] |
+| Core Mechanic: [name] | 2 | [primary action] |
+| Levels: [count] | [1 per 3] | [brief per level] |
+| **Total** | **[X]/10** | |
+
+### What's In V1
+- [Feature 1]
+- [Feature 2]
+
+### Saved for V2 (Kid's Ideas We're Keeping!)
+- [Deferred idea 1] — "kid's exact words"
+- [Deferred idea 2] — "kid's exact words"
+
+### Cut Decisions
+- [What was cut and why — link to cut-priority list]
+```
+
 ### 7. 🔁 Define the Core Game Loop
 
 The core loop is the heartbeat of the game. For kids ages 4–7, it must be **ultra-simple**:
@@ -566,6 +611,8 @@ The "Version 2" technique looks different for every genre. Use these as recipes:
 - Low = 1 point
 
 If the design exceeds 10 points, compress. Move excess to Version 2.
+
+**What counts toward the 10-point budget:** Only PRIMARY game elements that require unique code/art/design. Heroes (3pts), worlds (3pts), core mechanics (2pts), and levels (1pt per 3) are the main costs. Secondary elements like individual collectible variants, obstacle types, and NPCs are FREE as long as they reuse existing mechanics (e.g., 3 colors of candy all use the same "collect" mechanic = 0 extra points; a new enemy with unique behavior = 1 point).
 
 **Worked Example — Healthy Budget:**
 A platformer with 1 hero (3) + 1 world (3) + 1 core mechanic (2) + 3 levels (2) = **10/10.** ✅ Ship it.

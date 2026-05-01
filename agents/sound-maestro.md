@@ -82,6 +82,16 @@ Establish the overall sonic identity of the game based on the Game Card:
 - Cadence: 4-bar loops, each ending V→I (D→G) for constant satisfying resolution
 ```
 
+### Audio DNA String
+
+Like Art Spark's Style DNA, write an **Audio DNA String** once after the Audio Style Profile is finalized. Include it in every AI music/SFX prompt for consistency.
+
+**Format:** `AUDIO DNA: "{genre}, {key} {mode}, {BPM} BPM, {time sig}, {instruments}, {mood}, {avoid}"`
+
+**Example:** `AUDIO DNA: "music box + acoustic sparkle, C major, 112 BPM, 6/8, glockenspiel + harp + shaker, joyful + dreamy, no minor key / no distortion / no vocals"`
+
+Include this string at the top of every AI music prompt, every procedural SFX spec, and in the Audio Integration Contract.
+
 ### 2. 🔔 Create Sound Effects List
 
 Define every sound effect the game needs, organized by category:
@@ -121,6 +131,22 @@ Define every sound effect the game needs, organized by category:
 | Game over (gentle) | Descending soft notes + encouraging chime | 1s | "Try again!" feeling, not failure |
 | High score | Extended celebration with sparkles | 2-3s | Party time! |
 | Checkpoint | Reassuring "ping" with warmth | 0.3s | "You're safe here" feeling |
+
+#### Companion Character Sounds
+| Sound | Description | Duration | Notes |
+|-------|-------------|----------|-------|
+| Companion greeting | Species-appropriate hello (meow, bark, chirp, beep) | 0.3s | Plays on spawn or when companion "notices" something |
+| Companion happy | Excited version of greeting | 0.2s | Plays when player collects near companion |
+| Companion alert | Short attention sound | 0.15s | Plays when companion spots something interesting |
+
+**Procedural recipe (cat companion):**
+```javascript
+function sfxCatMeow() {
+  playSweep(600, 800, 0.12, 'sine', 0.08);
+  setTimeout(() => playSweep(800, 600, 0.13, 'sine', 0.07), 120);
+}
+```
+**Adapt for other species:** Dog bark = sawtooth 200→400Hz 0.15s; Bird chirp = sine 1200→1800Hz 0.1s; Robot beep = square 440Hz→880Hz 0.08s.
 
 #### Technical SFX Recipe Table (Procedural / Synthesis Spec)
 
@@ -185,6 +211,7 @@ World sounds that make the environment feel real:
 | Space | Soft cosmic hum, twinkling stars | Yes | Very low (atmosphere) |
 | Cave | Gentle echoing drips, soft wind | Yes | Low (not creepy!) |
 | Village/town | Distant cheerful chatter, birds, wind chimes | Yes | Low (background) |
+| Sky / Clouds | Gentle wind whoosh with occasional soft chime sparkles | Soft filtered white noise (bandpass 200-800Hz) at 0.12 gain + random sine chime (1000-2000Hz) every 3-6s at 0.04 gain | Calm, floating, open |
 
 **Ambient Rules:**
 - Ambient audio should be **barely noticeable** — felt, not heard
@@ -758,6 +785,7 @@ Use this table to quickly map game themes to audio styles. The Key / BPM / Scale
 | Jungle | Tribal, percussive | Exotic, wild | Wildlife, rain | Drums, marimba, woodwinds | A major | 115–130 | Major (Mixolydian for groove) | "Loopable kids' jungle theme, A Mixolydian, 124 BPM, tuned hand drums + marimba + pan flute, 4/4, no minor key, no scary animal cries, 30s seamless" |
 | Candy/sweet | Bubbly, playful | Pop, sparkle, fizz | Gentle chimes | Glockenspiel, music box | C major | 105–120 | Major | "Loopable bubblegum-pop for kids' candy game, C major, 112 BPM, glockenspiel + music box + soft kick, 4/4, no vocals, no minor key, 30s loop" |
 | Retro/pixel | Chiptune, 8-bit | Classic game bleeps | Minimal | Square waves, arpeggios | C major | 120–140 | Major | "Loopable 8-bit chiptune for kids' retro platformer, C major, 130 BPM, square lead + triangle bass + noise hat, 4/4, no minor key, 24s seamless loop" |
+| Fantasy / Magic | C Lydian | 100-120 | Major (Lydian) | Glockenspiel, music box, soft harp, light chimes | `[Style: magical music box, glockenspiel melody, harp arpeggios, dreamy, floating, children's fairy tale] [Key: C Lydian] [BPM: 110] [No: minor key, drums, bass drops, vocals]` |
 
 ---
 
